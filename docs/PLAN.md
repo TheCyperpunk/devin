@@ -40,12 +40,14 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
   - The laptop's Wi-Fi IP changed three times in an hour on a hotspot/guest Wi-Fi. Use the Windows hotspot (`192.168.137.1`) or a router before the demo; the IP is part of the app's origin.
 - Known limitations: `hubId` is a placeholder until the DB exists (Phase 2); iPhone not yet tested.
 
-### Phase 2 — Hub core
+### Phase 2 — Hub core ✅ (57 automated tests + live HTTPS end-to-end check)
 - `shared/contract.ts`: zod schemas from CONTRACT §2–§6.
 - SQLite schema (CONTRACT §7), revision counter, `hubId`, join code.
 - Pairing, coordinator login, bearer auth middleware, rate limit, 64 KB body limit, error format.
 - All REST endpoints except export. WS with auth handshake and role filtering.
-- **Gate:** automated tests: same report posted twice → 1 row; another device's `id` → 409; device A cannot read device B's reports; dashboard routes without a token → 401; a WS device client receives only its own events.
+- **Gate:** automated tests: same report posted twice → 1 row; another device's `id` → 409; device A cannot read device B's reports; dashboard routes without a token → 401; a WS device client receives only its own events. (Passed; the privacy tests were mutation-checked by deliberately breaking the filters.)
+- Built: `shared/src/contract.ts` (strict zod schemas), `server/src/{db,auth,routes,ws,hub}.ts`, `scripts/seed.ts` (12 fictional reports, `npm run seed`), `baseScore` early (Phase 3 adds the wait bonus, bands and sorting).
+- Known limitations: `GET /api/dashboard/export` and cloud sync are later phases (`cloud` status is always `not_configured`); sessions are never revoked early (24 h expiry, fine for a hub that restarts); the seed script writes straight to the database, so a running dashboard will not see seeded rows until it re-fetches.
 
 ### Phase 3 — Urgency
 - `shared/urgency.ts`: `baseScore(input)`, `displayScore(report, hubNow)`, `band()`, `compareReports()`.

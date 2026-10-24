@@ -15,7 +15,8 @@
     "test": "vitest run",
     "typecheck": "tsc -b shared server && tsc -p web --noEmit",
     "certs": "tsx scripts/make-certs.ts",
-    "icons": "tsx scripts/make-icons.ts"
+    "icons": "tsx scripts/make-icons.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

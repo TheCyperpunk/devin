@@ -106,7 +106,9 @@ When a `Report` arrives from REST or WS, store it only if its `revision` is grea
 | Phone | `POST /api/pair` → `deviceToken` (32 random bytes, base64url). Hub stores SHA-256 only. | `Authorization: Bearer <deviceToken>` |
 | Dashboard | `POST /api/dashboard/login` → `sessionToken`. Stored in `sessionStorage`. | `Authorization: Bearer <sessionToken>` |
 
-- Re-pairing the same `deviceId` issues a new token and revokes the old one. The `deviceId` keeps ownership of its reports.
+- Re-pairing the same `deviceId` issues a new token and revokes the old one (its open WebSockets are closed with code 4001). The `deviceId` keeps ownership of its reports. Anyone holding the join code can re-pair any `deviceId`, so the join code is the secret to protect: rotate it after pairing.
+- Rate limits: 60 requests/min per token (per IP when there is no token) on everything except `GET /api/health`; `POST /api/pair` and `POST /api/dashboard/login` are limited to 10/min per IP. Over the limit → `429 rate_limited` with `Retry-After`.
+- A `PATCH` that changes nothing returns the report unchanged without bumping `revision` or broadcasting.
 - Coordinator sessions are stored in SQLite and survive a hub restart. They expire after 24 h.
 
 ## 4. Error format
@@ -120,8 +122,8 @@ Every non-2xx response:
 | HTTP | `code` | Phone outbox action |
 |---|---|---|
 | 400 | `invalid_body` | mark `rejected`, do not retry |
-| 401 | `unauthorized` | stop sending, show "Pair again" |
-| 403 | `forbidden` / `bad_join_code` | show message |
+| 401 | `unauthorized` (missing, unknown, replaced or expired token) | stop sending, show "Pair again" |
+| 403 | `forbidden` (valid token, wrong role) / `bad_join_code` | show message |
 | 404 | `not_found` | — |
 | 409 | `conflict` | mark `rejected`, do not retry |
 | 413 | `too_large` | split batch, retry |
@@ -137,7 +139,7 @@ All endpoints are under `https://<HUB_IP>:3443`. JSON bodies only.
 **`GET /api/health`** → `200 { ok: true, time: number, hubId: string }`
 `hubId` is a random ID created with the database. If a phone sees a different `hubId` than the one saved with its pairing, the hub was reset: the phone pairs again and re-sends any report not in `sent` state.
 
-**`POST /api/pair`** `{ joinCode, deviceId, reporterName }` → `200 { deviceToken, deviceId, reporterName, hubId }`
+**`POST /api/pair`** `{ joinCode, deviceId, reporterName }` (join code is 8 characters from `A-Z` and `2-9` without `I O L 0 1`, compared case-insensitively; `deviceId` is 8–64 of `A-Za-z0-9_-`) → `200 { deviceToken, deviceId, reporterName, hubId }`
 Errors: `bad_join_code`, `invalid_body`.
 
 ### Device (device token)
@@ -148,10 +150,10 @@ Errors: `bad_join_code`, `invalid_body`.
 ```json
 { "results": [ { "id": "…", "result": "created" | "duplicate" | "conflict" | "invalid", "report"?: Report, "message"?: string } ] }
 ```
-Items are validated one by one, so one bad report never blocks the rest of the outbox. The whole request fails only for auth, size or a malformed envelope.
+Items are validated one by one, so one bad report never blocks the rest of the outbox. The whole request fails only for auth, size (more than 50 items → `413 too_large`) or a malformed envelope. For an `invalid` item, `id` is the id the phone sent (empty if none).
 
-**`GET /api/my-reports?after=<revision>`** → `200 { reports: Report[], maxRevision: number, serverTime: number }`
-Only this device's reports, ordered by `revision` ascending. `after` defaults to 0.
+**`GET /api/my-reports?after=<revision>`** → `200 { reports: Report[], maxRevision: number, hasMore: boolean, serverTime: number }`
+Only this device's reports, ordered by `revision` ascending, at most 500 per page. `after` defaults to 0. When `hasMore` is true, call again with `after=maxRevision`. `maxRevision` is the last returned revision, or `after` when the page is empty.
 
 ### Coordinator (session token)
 

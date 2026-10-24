@@ -1,4 +1,4 @@
-// Loads .env from the repo root and resolves the paths the hub needs. Fails fast on missing certs.
+// Loads .env from the repo root and resolves the paths the hub needs. Fails fast on missing certs or passcode.
 import dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -16,6 +16,7 @@ export const config = {
   hubIp: process.env.HUB_IP ?? '127.0.0.1',
   httpsPort: Number(process.env.HTTPS_PORT ?? PORTS.https),
   setupPort: Number(process.env.SETUP_PORT ?? PORTS.setup),
+  coordinatorPasscode: process.env.COORDINATOR_PASSCODE ?? '',
   certsDir: path.join(repoRoot, 'certs'),
   webDist: path.join(repoRoot, 'web', 'dist'),
   dataDir: path.join(repoRoot, 'server', 'data'),
@@ -32,6 +33,16 @@ export function assertCertsExist(): void {
   if (missing.length) {
     console.error('Missing certificate files:\n  ' + missing.join('\n  '));
     console.error('Run: npm run certs');
+    process.exit(1);
+  }
+}
+
+/** The dashboard passcode guards every report on the hotspot, so a missing or sample value is refused. */
+export function assertPasscode(): void {
+  const p = config.coordinatorPasscode;
+  if (p.length < 8 || p.startsWith('change-me')) {
+    console.error('COORDINATOR_PASSCODE in .env is missing, shorter than 8 characters, or still the sample value.');
+    console.error('Set it to something only the coordinators know, then start again.');
     process.exit(1);
   }
 }
