@@ -12,6 +12,8 @@
     "@fontsource/fraunces": "^5.2.6",
     "@fontsource/manrope": "^5.2.6",
     "@fontsource/noto-sans-malayalam": "^5.2.6",
+    "@fontsource/pixelify-sans": "^5.2.6",
+    "@fontsource/press-start-2p": "^5.2.6",
     "@relief-mesh/shared": "*",
     "idb": "^8.0.0",
     "leaflet": "^1.9.4",

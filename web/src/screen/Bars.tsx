@@ -3,15 +3,25 @@ import { thuruthu, type GameView } from '@relief-mesh/shared';
 import type { JoinInfo } from '../dashboard/api.js';
 import { clockText, totals } from './format.js';
 import { Host } from './Host.js';
+import { SPRITES, spriteRects } from './sprites.js';
 import type { ScreenStore } from './store.js';
 import { useTween } from './useStore.js';
 
+/** A 9×7 pixel star. */
 export function Star({ on }: { on: boolean }) {
+  const rects = spriteRects(on ? SPRITES.star : SPRITES.starOff, 1);
   return (
-    <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill={on ? '#FFB74D' : 'none'} stroke={on ? '#FFB74D' : '#7D8597'} strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />
+    <svg aria-hidden="true" viewBox="-4.5 -7 9 7" shapeRendering="crispEdges">
+      {rects.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.fill} />
+      ))}
     </svg>
   );
+}
+
+/** Scores read like an arcade counter: 0170, -045. */
+export function padScore(n: number): string {
+  return n < 0 ? '-' + String(-n).padStart(3, '0') : String(n).padStart(4, '0');
 }
 
 export function TopBar({ view, hubNow, hub }: { view: GameView | null; hubNow: number; hub: string }) {
@@ -54,7 +64,7 @@ export function BottomBar({ view, join, store, busy, sound }: { view: GameView |
     <footer className="bar bottom">
       <div className="score">
         <span className="label">Score</span>
-        <span className="num huge" data-testid="score">{score}</span>
+        <span className="num huge" data-testid="score">{padScore(score)}</span>
       </div>
       {t && (
         <div className="people">

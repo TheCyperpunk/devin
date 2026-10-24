@@ -51,9 +51,14 @@ export function Lobby({ view, join, store, busy }: { view: GameView | null; join
           </div>
           <div className="actions">
             {view ? (
-              <button type="button" className="btn lamp" disabled={busy} onClick={() => void store.host('start')} data-host="start">
-                Start the night
-              </button>
+              <>
+                <span className="press blinkText" aria-hidden="true">
+                  ▶ PRESS START
+                </span>
+                <button type="button" className="btn lamp" disabled={busy} onClick={() => void store.host('start')} data-host="start">
+                  Start the night
+                </button>
+              </>
             ) : (
               <>
                 <label className="opt">

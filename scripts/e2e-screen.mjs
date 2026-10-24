@@ -51,7 +51,7 @@ try {
   await page.type('input[name=passcode]', passcode);
   await page.$eval('button[type=submit]', (el) => el.click());
   ok(await waitHost(page, 'new'), 'screen: logged in, no game yet, "Open the lobby" offered');
-  ok(await page.evaluate(() => document.fonts.check('700 40px Fraunces') && document.fonts.check('700 20px Manrope')), 'fonts: Fraunces and Manrope loaded from the hub');
+  ok(await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check("16px 'Press Start 2P'") && document.fonts.check("600 20px 'Pixelify Sans'"); }), 'fonts: Press Start 2P and Pixelify Sans loaded from the hub');
   await page.screenshot({ path: path.join(shots, '1-no-game.png') });
 
   // ---- lobby
@@ -103,7 +103,7 @@ try {
   ok(await waitText(page, 'First light'), 'end: first light screen');
   const score = await page.$eval('.endPanel .num.huge', (el) => el.innerText);
   ok(Number(score) === 170, `end: three bots score 170 (${score})`);
-  ok((await text(page)).includes('people saved'), 'end: stats with the 2018 lines');
+  ok((await text(page)).toLowerCase().includes('people saved'), 'end: stats with the 2018 lines');
   ok(await page.$('a[href="/dashboard.html"]') !== null, 'end: link to the real tool');
   await page.screenshot({ path: path.join(shots, '5-first-light.png') });
 

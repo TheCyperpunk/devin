@@ -1,4 +1,43 @@
-# Pralayam — visual design system ("Monsoon night")
+# Pralayam — visual design system ("Monsoon night", pixel edition)
+
+> **2026-10-25, after G3:** the screen was restyled as an old 2D pixel game at the team's request. What follows in
+> this section is the pixel edition that is live; the original "glass and glow" sections below it stay as the
+> source of layout, copy and motion rules, read through the pixel lens (no blur, no gradients, no rounded corners).
+
+## 0. Pixel edition
+
+**Research we leaned on.** Retro UI guides agree on a few rules: align every panel and sprite to an integer pixel or
+tile grid and scale only by whole numbers; use a compact indexed palette with explicit light, midtone, shadow and
+status colours and turn smoothing off; build dialog frames from stair-stepped corners and hard pixel drop shadows
+rather than soft shadows; keep typography blocky and short. NES/SNES HUDs put the score (zero-padded), the round and
+a timer on one strip, blink what needs attention, and animate in steps, never with easing.
+
+**Palette, 16 colours** (`web/src/screen/sprites.ts`, mirrored as `--p-*` tokens in `web/src/game/theme.css`):
+black #0b0b14 · navy #141b33 · blue-dark #1c2b55 · blue #2a4ba3 · water-1 #1f6f8b · water-2 #36a3c9 · foam #9be7ff ·
+wall #e8d9b5 · roof #b5473a · wood #4a2f1f · yellow #ffd23f · orange #ff7b2e · red #ff3c5f · green #3fd6a0 ·
+grey #8a93a6 · white #f4f1ea. Bands: red = red, orange = orange, yellow = yellow, same meaning as Relief Mesh.
+
+**Type.** Press Start 2P (OFL) for headings, numbers, labels and buttons at 10–44 px; Pixelify Sans (OFL) for body at
+15–22 px; both bundled from `@fontsource`. No pixel Malayalam exists, so `html[lang=ml]` falls back to Noto Sans
+Malayalam. Font smoothing is turned off on the big screen.
+
+**Boxes.** Every panel is the NES dialog box: 4 px light frame, 4 px dark inset line, 8 px hard shadow. Buttons are
+the same box with a 4 px shadow that shrinks to 2 px when pressed. No border radius anywhere.
+
+**Map.** Everything is rects on a 4-unit grid with `shape-rendering: crispEdges`: houses, temple, school, camp,
+hospital, jetty and boats are bitmap sprites (`sprites.ts`); the river is a staircase polygon that climbs 28 units per
+water level in 7 steps; the surface is a dithered checker band with a square-wave foam row drifting in 4 steps; dead
+zones are checkerboard squares with a dashed frame; calls are square frames in the band colour (red ones blink);
+boats slide between nodes in 10 steps; rain is 2×8 blocks falling in 14 steps. Node names are uppercase; a flooded
+house shows its roof over two rows of water and a "~" after its name; a safe shelter shows "✦".
+
+**HUD.** Score is zero-padded (0170, -045). Stars are 9×7 pixel sprites. The timer sits in a yellow frame and turns
+red under 10 s. Toasts are small black boxes with a coloured 3 px frame. A faint CRT scanline overlay (12 %) sits
+under the overlays so the lobby QR stays crisp for cameras; the small QR in the bar is raised above it.
+
+**Motion.** Stepped only: `steps(n)` on every transition and keyframe; blink at 0.8 s; "▶ PRESS START" blinks in the
+lobby. `prefers-reduced-motion` stops all of it.
+
 
 The game must feel premium on a projector and on a five-year-old Android phone, with nothing loaded from the
 Internet. One design system for both surfaces; the big screen is the hero, the phone is the controller.

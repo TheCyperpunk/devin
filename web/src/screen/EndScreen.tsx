@@ -1,6 +1,6 @@
 // "First light": stars, three numbers with one real line from 2018 each, crews ranked, play again / the real tool.
 import type { GameView } from '@relief-mesh/shared';
-import { Star } from './Bars.js';
+import { Star, padScore } from './Bars.js';
 import { COLOR_HEX, totals } from './format.js';
 import type { ScreenStore } from './store.js';
 
@@ -14,7 +14,7 @@ export function EndScreen({ view, store, busy }: { view: GameView; store: Screen
         <div className="head">
           <span className="display h1">First light</span>
           <span className="muted">{view.round} rounds · team score</span>
-          <span className="num huge">{view.score}</span>
+          <span className="num huge">{padScore(view.score)}</span>
           <span className="stars big" role="img" aria-label={`${view.stars} of 3 stars`}>
             {[1, 2, 3].map((i) => (
               <Star key={i} on={view.stars >= i} />
