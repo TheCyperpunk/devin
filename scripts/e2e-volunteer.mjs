@@ -59,7 +59,8 @@ const ok = (cond, msg) => {
 };
 const text = (page) => page.evaluate(() => document.body.innerText);
 const waitText = (page, s, ms = 8000) =>
-  page.waitForFunction((x) => document.body.innerText.includes(x), { timeout: ms }, s).then(() => true, () => false);
+  // Interval polling: the default (animation frames) never fires in a background tab, and this script keeps two open.
+  page.waitForFunction((x) => document.body.innerText.includes(x), { timeout: ms, polling: 100 }, s).then(() => true, () => false);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // Click through the DOM: a mouse click can land on the sticky header when the element was just scrolled into view.
 const tap = (page, sel) => page.$eval(sel, (el) => el.click());

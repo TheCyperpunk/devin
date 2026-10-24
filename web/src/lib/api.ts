@@ -33,7 +33,7 @@ export interface ReportsPage {
   serverTime: number;
 }
 
-async function request<T>(
+export async function request<T>(
   method: string,
   path: string,
   opts: { token?: string; body?: unknown; timeoutMs?: number } = {},

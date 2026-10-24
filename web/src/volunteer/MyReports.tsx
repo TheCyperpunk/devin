@@ -32,7 +32,8 @@ export function MyReports({ refreshKey }: { refreshKey: number }) {
             {r.input.peopleCount} · {timeAgo(r.createdAtLocal, now, t)}
             {r.input.urgent ? ' · ' + t('urgent') : ''}
           </div>
-          {r.input.note && <div className="note">{r.input.note}</div>}
+          {/* Once the hub has the report, its copy of the note wins: the coordinator may have corrected it. */}
+          {(r.report ? r.report.note : r.input.note) && <div className="note">{r.report ? r.report.note : r.input.note}</div>}
           {r.syncState === 'rejected' && r.rejectReason && (
             <div className="error">{t('rejectedWhy', { reason: r.rejectReason })}</div>
           )}

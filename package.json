@@ -17,7 +17,8 @@
     "certs": "tsx scripts/make-certs.ts",
     "icons": "tsx scripts/make-icons.ts",
     "seed": "tsx scripts/seed.ts",
-    "e2e": "node scripts/e2e-volunteer.mjs"
+    "e2e": "node scripts/e2e-volunteer.mjs",
+    "e2e:dashboard": "node scripts/e2e-dashboard.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

@@ -2,7 +2,7 @@
 
 A local relief hub for flood response in Kochi. Volunteers report needs from their phones, and a coordinator triages them on a laptop. Everything runs over local Wi-Fi with no Internet. When the Internet returns, the hub backs up to the cloud.
 
-Status: **Phase 5 complete** — volunteers can pair, report offline, and reports reach the hub automatically on reconnect with live status back. The coordinator dashboard is Phase 6.
+Status: **Phase 6 complete** — the whole loop works: volunteers report (even offline), reports reach the hub on reconnect, the coordinator sees them live, assigns and closes them, and the phone shows the outcome. Cloud backup (Phase 7) and hardening (Phase 8) remain.
 
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
 - [docs/CONTRACT.md](docs/CONTRACT.md) — data model, API, WebSocket, storage
@@ -21,10 +21,10 @@ npm run build
 npm start
 ```
 
-- Hub (phones + dashboard): `https://<HUB_IP>:3443` — dashboard at `/dashboard.html`
+- Hub (phones + dashboard): `https://<HUB_IP>:3443` — dashboard at `/dashboard.html` (needs `COORDINATOR_PASSCODE`; the Join tab shows the QR and join code for phones)
 - Setup page for phones: `http://<HUB_IP>:8080` (download + trust the certificate, then open the hub)
 
-`npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through pairing, offline reporting, reconnect delivery and live assignment against the running hub (needs Edge or Chrome; set `E2E_ORIGIN`/`E2E_DB` to point it at a second hub started with `HTTPS_PORT=3553 DATA_DIR=... node server/dist/index.js`). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
+`npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through pairing, offline reporting, reconnect delivery and live assignment, and `npm run e2e:dashboard` runs a phone window and a dashboard window together through the full assign/done loop, both against the running hub (needs Edge or Chrome; set `E2E_ORIGIN`/`E2E_DB` to point it at a second hub started with `HTTPS_PORT=3553 DATA_DIR=... node server/dist/index.js`). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
 
 ### Layout
 

@@ -7,6 +7,7 @@
 // coordinator change that lands between two of our requests is still fetched by the next catch-up (no lost updates).
 import { LIMITS, TIMING, clockOffset, type PhoneReportInput, type Report, type ServerMessage } from '@relief-mesh/shared';
 import { ApiFail, type Api, type PairResponse } from './api.js';
+import { openBrowserSocket } from './socket.js';
 import {
   applyHubReports,
   backoffEntries,
@@ -331,13 +332,6 @@ export function browserEnv(api: Api): Env {
     now: () => Date.now(),
     setTimeout: (fn, ms) => window.setTimeout(fn, ms),
     clearTimeout: (id) => window.clearTimeout(id as number),
-    openSocket(h) {
-      const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
-      ws.onopen = () => h.onOpen((msg) => ws.send(msg));
-      ws.onmessage = (e) => h.onMessage(String(e.data));
-      ws.onclose = (e) => h.onClose(e.code);
-      ws.onerror = () => ws.close();
-      return { close: () => ws.close() };
-    },
+    openSocket: openBrowserSocket,
   };
 }

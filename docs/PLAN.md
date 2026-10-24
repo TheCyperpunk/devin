@@ -77,11 +77,16 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Fixed on the way: a tap on a control that had just been scrolled into view landed under the sticky header (`scroll-margin-top` now keeps controls clear of it).
 - Known limitations: the hub-restart-mid-batch case is covered by unit tests (duplicate answers, pushes for already-stored reports), not by the browser run; Background Sync while the app is fully closed is not promised (D8); rejected reports show the hub's reason in English only.
 
-### Phase 6 — Coordinator dashboard
+### Phase 6 — Coordinator dashboard ✅ (17 store tests + two-window browser run: phone → dashboard 130–230 ms, assign → phone 166 ms)
 - Passcode login. Counters. Top-3 critical strip. Sorted list (primary view). Detail panel: assign, mark done, reopen, edit note.
 - Live updates over WS with catch-up on reconnect. New items flash. Join panel with QR and "New code".
 - Leaflet map as a secondary tab: colored pins, OSM attribution, "map needs Internet" notice (D9).
 - **Gate:** phone submit → shows on the dashboard in < 2 s → assign → phone shows "Assigned to NAME" → done → both update. Works with the map tab never opened.
+- Built: `web/src/dashboard/{store,api,useStore,format}.ts`, `{App,Login,ReportList,Detail,JoinPanel,MapView}.tsx`, `dashboard.css`. The store mirrors the phone's SyncManager (catch-up by cursor, revision merge, socket with auth/reconnect, coalesced refresh, session in `sessionStorage`). Counters are computed from the reports held, so they can never disagree with the list.
+- List-first: top-3 critical strip, rows coloured by band with the live score, flags, reporter, "x min ago" from the hub clock, status chip; new arrivals flash for 4 s; done rows grey and last. Detail: score breakdown (base + waiting), all fields, assign/reassign/done/reopen, note edit. Join tab: QR + code + "New code". Map tab is `React.lazy`: Leaflet (150 KB) is downloaded only when opened, circle markers by band, honest notice when tiles do not load (D9).
+- Verified by `npm run e2e:dashboard` (phone + dashboard windows against a throwaway hub): wrong/right passcode, live socket, report shows < 2 s and is highlighted, red band for medical+rescue+urgent, assign disabled until a team is typed, assignment and done reach the phone, done sorts last, note edit reaches the phone, map loads lazily with one pin per located report, join code matches the hub and rotates, reload keeps the session, logout clears it, no horizontal overflow at 1366/1024/768/390.
+- Fixed on the way: Leaflet threw when leaving the Map tab mid-animation (now `animate:false` + `stop()` before `remove()`); the phone showed its own draft note instead of the hub's, so a coordinator's note edit was invisible there.
+- Known limitations: dashboard is English only (by design: the coordinator is at the laptop); no CSV export or audit log yet (stretch); "Export DB" is Phase 8; tiles are never cached or pre-seeded (OSM policy).
 
 ### Phase 7 — Cloud backup
 - `cloudSync.ts` per CONTRACT §9; `CloudStatus` banner on the dashboard.
