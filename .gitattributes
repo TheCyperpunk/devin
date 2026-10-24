@@ -1,0 +1,6 @@
+# Store everything as LF; editors on Windows can still use CRLF locally.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.db binary

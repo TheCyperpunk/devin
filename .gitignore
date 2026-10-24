@@ -1,0 +1,15 @@
+node_modules/
+dist/
+web/dist/
+*.tsbuildinfo
+certs/
+server/data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+*.pem
+*.log
+.DS_Store

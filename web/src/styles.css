@@ -1,0 +1,22 @@
+/* Base styles shared by both pages. Phase 4/6 add the real UI. */
+:root {
+  --green: #0b6e4f;
+  --ink: #1b1b1b;
+  --muted: #666;
+  --bg: #fff;
+  --ok: #0b6e4f;
+  --warn: #b35c00;
+  --bad: #b00020;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans Malayalam", sans-serif; }
+body { padding: 20px max(16px, env(safe-area-inset-left)); line-height: 1.5; }
+h1 { font-size: 1.6rem; margin: 0 0 8px; }
+.card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 12px 0; }
+.row { display: flex; justify-content: space-between; align-items: center; min-height: 48px; }
+.pill { padding: 4px 12px; border-radius: 999px; font-weight: 600; color: #fff; background: var(--muted); }
+.pill.ok { background: var(--ok); }
+.pill.warn { background: var(--warn); }
+.pill.bad { background: var(--bad); }
+.muted { color: var(--muted); }
+code { background: #f1f1f1; padding: 2px 6px; border-radius: 4px; word-break: break-all; }

@@ -1,0 +1,31 @@
+{
+  "name": "relief-mesh",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,hub -c cyan,green \"npm run dev -w web\" \"npm run dev -w server\"",
+    "build": "npm run build -w shared && npm run build -w web && npm run build -w server",
+    "start": "npm run start -w server",
+    "test": "vitest run",
+    "typecheck": "tsc -b shared server && tsc -p web --noEmit",
+    "certs": "tsx scripts/make-certs.ts",
+    "icons": "tsx scripts/make-icons.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "concurrently": "^9.1.0",
+    "sharp": "^0.33.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

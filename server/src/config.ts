@@ -1,0 +1,37 @@
+// Loads .env from the repo root and resolves the paths the hub needs. Fails fast on missing certs.
+import dotenv from 'dotenv';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { PORTS } from '@relief-mesh/shared';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+// Works from both server/src (tsx) and server/dist (node)
+export const repoRoot = path.resolve(here, '..', '..');
+
+// Always read the root .env, regardless of the cwd npm workspaces run us from (server/).
+dotenv.config({ path: path.join(repoRoot, '.env') });
+
+export const config = {
+  hubIp: process.env.HUB_IP ?? '127.0.0.1',
+  httpsPort: Number(process.env.HTTPS_PORT ?? PORTS.https),
+  setupPort: Number(process.env.SETUP_PORT ?? PORTS.setup),
+  certsDir: path.join(repoRoot, 'certs'),
+  webDist: path.join(repoRoot, 'web', 'dist'),
+  dataDir: path.join(repoRoot, 'server', 'data'),
+};
+
+export const certPaths = {
+  cert: path.join(config.certsDir, 'hub.pem'),
+  key: path.join(config.certsDir, 'hub-key.pem'),
+  rootCA: path.join(config.certsDir, 'rootCA.pem'),
+};
+
+export function assertCertsExist(): void {
+  const missing = [certPaths.cert, certPaths.key].filter((p) => !existsSync(p));
+  if (missing.length) {
+    console.error('Missing certificate files:\n  ' + missing.join('\n  '));
+    console.error('Run: npm run certs');
+    process.exit(1);
+  }
+}
