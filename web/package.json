@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/fraunces": "^5.2.6",
+    "@fontsource/manrope": "^5.2.6",
+    "@fontsource/noto-sans-malayalam": "^5.2.6",
     "@relief-mesh/shared": "*",
     "idb": "^8.0.0",
     "leaflet": "^1.9.4",

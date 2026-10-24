@@ -1,0 +1,66 @@
+/* "Monsoon night" design system shared by the big screen and the phone (docs/GAME-VISUAL.md). Fonts are bundled
+   from @fontsource (imported in each entry), so nothing here loads from the Internet. */
+:root {
+  --night-0: #070D18; --night-1: #0B1526; --night-2: #12203A; --night-3: #1C2F52;
+  --water-0: #0C3146; --water-1: #16607A; --water-2: #2FA8C4;
+  --lamp: #FFB74D; --ember: #FF6B35; --alarm: #FF3B5C; --moss: #2EC4B6; --signal-off: #8A93A6;
+  --ink: #F4F1EA; --ink-2: #B9C0CF; --ink-3: #7D8597;
+  --glass: rgba(255,255,255,.06); --glass-line: rgba(255,255,255,.12);
+  --shadow: 0 20px 60px rgba(0,0,0,.45);
+  --radius: 20px;
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --font-ui: Manrope, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: Fraunces, Georgia, serif;
+}
+html[lang='ml'] body { font-family: 'Noto Sans Malayalam', var(--font-ui); }
+html, body { height: 100%; }
+body { margin: 0; background: var(--night-0); color: var(--ink); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid var(--lamp); outline-offset: 2px; }
+a { color: var(--lamp); }
+
+.num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.display { font-family: var(--font-display); font-weight: 700; letter-spacing: -.01em; line-height: 1.05; }
+.label { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+.muted { color: var(--ink-2); }
+.hint { color: var(--ink-3); }
+.glass { background: var(--glass); border: 1px solid var(--glass-line); border-radius: var(--radius); }
+.panel { background: rgba(18,32,58,.92); border: 1px solid rgba(255,255,255,.14); border-radius: 28px; box-shadow: var(--shadow); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 0 28px; border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.22); background: var(--night-2); color: var(--ink); font-weight: 700; font-size: 20px; text-decoration: none;
+  transition: transform .15s var(--ease), background .15s; }
+.btn:hover { background: var(--night-3); }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.lamp { background: var(--lamp); color: #1a1000; border-color: transparent; font-weight: 800; }
+.btn.lamp:hover { background: #ffc46a; }
+.btn.ghost { background: transparent; }
+.btn.small { min-height: 44px; padding: 0 18px; font-size: 16px; }
+
+.chip { display: inline-block; width: 14px; height: 14px; border-radius: 4px; flex: none; }
+.tag { font-size: 14px; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.1); color: var(--ink-2); font-weight: 700; }
+
+/* bands */
+.band-red { --band: var(--alarm); --band-bg: rgba(255,59,92,.12); --band-line: rgba(255,59,92,.45); }
+.band-orange { --band: var(--ember); --band-bg: rgba(255,107,53,.1); --band-line: rgba(255,107,53,.4); }
+.band-yellow { --band: var(--lamp); --band-bg: rgba(255,183,77,.08); --band-line: rgba(255,183,77,.35); }
+
+/* motion */
+@keyframes drift { from { transform: translateX(0); } to { transform: translateX(-60px); } }
+@keyframes breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes rain { from { transform: translateY(-120px); } to { transform: translateY(1300px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+.wave { animation: drift 9s linear infinite; }
+.wave2 { animation: drift 13s linear infinite reverse; }
+.breathe { animation: breathe 2s ease-in-out infinite; }
+.breathe.fast { animation-duration: 1.2s; }
+.rain { animation: rain 1.6s linear infinite; }
+.rise { animation: rise .3s var(--ease) both; }
+.pop { animation: pop .5s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) {
+  .wave, .wave2, .breathe, .rain, .rise, .pop { animation: none; }
+  * { transition-duration: 0s !important; }
+}

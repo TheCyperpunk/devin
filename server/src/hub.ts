@@ -76,6 +76,7 @@ export function createHub(opts: HubOptions) {
       }),
     );
     app.get('/dashboard', (_req, res) => res.sendFile(path.join(dist, 'dashboard.html')));
+    app.get('/screen', (_req, res) => res.sendFile(path.join(dist, 'screen.html')));
   } else if (opts.webDist) {
     app.get('*', (_req, res) => {
       res.status(503).type('text').send('web/dist not found. Run: npm run build');

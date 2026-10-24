@@ -39,7 +39,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Gate:** `curl` a whole round from two terminals; the hub log shows `[game] round N resolved`.
 - Done: `game` table + `game_revision` meta in `db.ts`; `GameService` (`game.ts`) owns the one current game, persists after every change, arms the round timer from `deadlineAt`, resolves overdue rounds on boot, resolves early once every crew in contact has ordered and 10 s have passed, keeps heartbeats out of the revision; `gameRoutes.ts` serves GAME-CONTRACT §5; `ws.ts` pushes `game:state`, `game:round`, `game:you`. The `resolving` phase is not used by the hub: screens animate `game:round` on their own.
 
-## G3 — Big screen (`/screen.html`)
+## G3 — Big screen (`/screen.html`) ✅ (8 store tests + 25 browser checks: lobby, bot night to first light, pause/resume, no request leaves the hub)
 - `web/src/game/theme.css` (tokens from GAME-VISUAL), `web/public/fonts/` via `scripts/fetch-fonts.mjs`
   (dev-time only; the page never loads a remote URL).
 - `web/src/screen/` — `App.tsx` (lobby / playing / resolving / end), `Map.tsx` (SVG map, water clip, rain,
@@ -50,6 +50,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Tests: store merge-by-revision, event queue ordering, `Map` geometry helpers.
 - e2e: `scripts/e2e-screen.mjs` runs a bot-only game on a throwaway hub and screenshots lobby, a round, the end.
 - **Gate:** a bot-only game is watchable on the projector from 5 m; nothing in the network tab leaves the hub.
+- Done: `web/src/game/theme.css` (tokens shared with the phone), fonts bundled from `@fontsource` (Fraunces, Manrope, Noto Sans Malayalam; no `npm run fonts` needed), `web/src/screen/*` (store mirroring the dashboard store, SVG map with CSS-transitioned boat moves and a flood band that climbs with the water, side panel, bars with host controls and the join QR, lobby and first-light overlays, toasts, synthesized sound off by default). `npm run e2e:screen` plays a bot night in a real browser and asserts no external request. The host session is the dashboard's session key, so one passcode covers both pages.
 
 ## G4 — Phone (`/play`)
 - `web/src/lib/gameDb.ts` — `gameOutbox` store + `settings.game`; `gameSync.ts` — order flush with the same
@@ -79,7 +80,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Gate:** strangers finish a game with no help and say what they would do differently next time.
 
 ## Commands (once G1 lands)
-`npm test` · `npm run build` · `npm run sim` · `npm run e2e:screen` · `npm run e2e:play` · `npm start`
+`npm test` · `npm run build` · `npm run sim` · `npm run e2e:screen` · `npm run e2e:play` (G4) · `npm start`
 (serves `/`, `/dashboard.html`, `/screen.html`, `/play` from one hub).
 
 ## Fallback

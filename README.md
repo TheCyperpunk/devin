@@ -4,6 +4,8 @@ A local relief hub for flood response in Kochi. Volunteers report needs from the
 
 Status: **Phase 8 built** — the whole loop works: volunteers report (even offline), reports reach the hub on reconnect, the coordinator sees them live, assigns and closes them, the phone shows the outcome, and when the Internet is up the hub backs every change up to Supabase (verified live). The dashboard's **Export DB** button downloads the whole database as a SQLite file for a spare laptop. Left: the Phase 8 usability gate with a teammate, the Phase 9 integration run on real phones, and demo prep.
 
+**Pralayam** (Track 3 + 4): a co-op flood-night rescue game on the same hub, where signal dead zones are real offline play. Design in `docs/GAME-*.md`. Done: rules engine (`npm run sim`), hub game service (`/api/game/*`), big screen at `https://<HUB_IP>:3443/screen.html` (coordinator passcode; open a lobby, start a bot night, skip rounds). Next: the phone play screens.
+
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
 - [docs/CONTRACT.md](docs/CONTRACT.md) — data model, API, WebSocket, storage
 - [docs/PLAN.md](docs/PLAN.md) — phases and test gates

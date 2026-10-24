@@ -1,4 +1,4 @@
-// Vite config: two entry pages (volunteer "/", dashboard "/dashboard.html") and the PWA service worker.
+// Vite config: three entry pages (volunteer "/", dashboard "/dashboard.html", game big screen "/screen.html") and the PWA service worker.
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -33,9 +33,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         // The dashboard runs on the hub laptop and must always come fresh from the hub: if the laptop's browser
         // ever opened the volunteer page, this worker would otherwise keep serving an old dashboard from cache.
-        globIgnores: ['**/dashboard.html', '**/assets/dashboard-*', '**/assets/MapView-*'],
+        // Same for the game's big screen (it runs on the laptop too). Its fonts stay cached: the phone game reuses them.
+        globIgnores: ['**/dashboard.html', '**/assets/dashboard-*', '**/assets/MapView-*', '**/screen.html', '**/assets/screen-*'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/dashboard/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/dashboard/, /^\/screen/, /^\/ws/],
         runtimeCaching: [],
         cleanupOutdatedCaches: true,
       },
@@ -54,6 +55,7 @@ export default defineConfig({
       input: {
         volunteer: resolve(__dirname, 'index.html'),
         dashboard: resolve(__dirname, 'dashboard.html'),
+        screen: resolve(__dirname, 'screen.html'),
       },
     },
   },

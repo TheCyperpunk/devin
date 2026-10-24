@@ -35,7 +35,7 @@ Band colours stay semantically identical to Relief Mesh: red = alarm, orange = e
 Contrast: every text token on `--night-0..2` is ≥ 7:1; `--ink-3` on `--night-1` is 4.6:1 and only used for hints.
 
 ## 3. Type
-Self-hosted (OFL, `web/public/fonts/*.woff2`, fetched once by `npm run fonts`, never from a CDN at runtime):
+Self-hosted (OFL) via the `@fontsource` packages, bundled by Vite into `web/dist/assets`, never from a CDN at runtime:
 - **Fraunces** (display, optical size 72+, soft serif) for the title, round numbers, the score.
 - **Manrope** (UI) for everything else.
 - **Noto Sans Malayalam** for `html[lang=ml]`, same sizes +5%.
