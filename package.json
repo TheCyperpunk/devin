@@ -18,7 +18,8 @@
     "icons": "tsx scripts/make-icons.ts",
     "seed": "tsx scripts/seed.ts",
     "e2e": "node scripts/e2e-volunteer.mjs",
-    "e2e:dashboard": "node scripts/e2e-dashboard.mjs"
+    "e2e:dashboard": "node scripts/e2e-dashboard.mjs",
+    "check:bundle": "node scripts/check-bundle.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

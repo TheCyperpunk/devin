@@ -17,6 +17,9 @@ export const config = {
   httpsPort: Number(process.env.HTTPS_PORT ?? PORTS.https),
   setupPort: Number(process.env.SETUP_PORT ?? PORTS.setup),
   coordinatorPasscode: process.env.COORDINATOR_PASSCODE ?? '',
+  // Server-only. Never exposed to the web app (D10).
+  supabaseUrl: (process.env.SUPABASE_URL ?? '').trim(),
+  supabaseSecretKey: (process.env.SUPABASE_SECRET_KEY ?? '').trim(),
   certsDir: path.join(repoRoot, 'certs'),
   webDist: path.join(repoRoot, 'web', 'dist'),
   dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(repoRoot, 'server', 'data'),

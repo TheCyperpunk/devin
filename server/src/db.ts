@@ -271,6 +271,40 @@ export class HubDb {
     })();
   }
 
+  // ---- cloud backup bookkeeping (Phase 7, D10) ----
+
+  /** Reports whose latest revision has not reached the cloud, oldest change first. */
+  pendingCloud(limit: number): Report[] {
+    const rows = this.db
+      .prepare('select * from reports where revision > cloud_revision order by revision asc limit ?')
+      .all(limit) as ReportRow[];
+    return rows.map(toReport);
+  }
+  pendingCloudCount(): number {
+    return (this.db.prepare('select count(*) as n from reports where revision > cloud_revision').get() as { n: number }).n;
+  }
+  /** Record which revision of each report was uploaded. A row edited meanwhile keeps a higher revision and stays pending. */
+  markCloud(uploaded: { id: string; revision: number }[]): void {
+    const stmt = this.db.prepare('update reports set cloud_revision = ? where id = ? and cloud_revision < ?');
+    this.db.transaction(() => {
+      for (const u of uploaded) stmt.run(u.revision, u.id, u.revision);
+    })();
+  }
+  cloudSummary(): { total: number; backedUp: number } {
+    const r = this.db
+      .prepare('select count(*) as total, sum(case when cloud_revision > 0 then 1 else 0 end) as backed from reports')
+      .get() as { total: number; backed: number | null };
+    return { total: r.total, backedUp: r.backed ?? 0 };
+  }
+  get lastCloudSyncAt(): number | null {
+    const v = this.getMeta('last_cloud_sync_at');
+    return v === undefined ? null : Number(v);
+  }
+  set lastCloudSyncAt(t: number | null) {
+    if (t === null) this.db.prepare('delete from meta where key = ?').run('last_cloud_sync_at');
+    else this.setMeta('last_cloud_sync_at', String(t));
+  }
+
   stats(): Stats {
     const rows = this.db.prepare('select status, count(*) as n from reports group by status').all() as { status: Status; n: number }[];
     const out: Stats = { open: 0, assigned: 0, done: 0 };

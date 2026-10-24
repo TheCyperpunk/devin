@@ -24,6 +24,10 @@ npm start
 - Hub (phones + dashboard): `https://<HUB_IP>:3443` — dashboard at `/dashboard.html` (needs `COORDINATOR_PASSCODE`; the Join tab shows the QR and join code for phones)
 - Setup page for phones: `http://<HUB_IP>:8080` (download + trust the certificate, then open the hub)
 
+### Cloud backup (optional)
+
+Create a Supabase project, run the SQL from [docs/CONTRACT.md](docs/CONTRACT.md) section 9 in its SQL editor, then put the project URL and a **secret** key (never the anon/publishable one) in `.env` as `SUPABASE_URL` and `SUPABASE_SECRET_KEY` and restart the hub. The dashboard header then shows `Offline — N waiting` / `Syncing…` / `Synced`. Without the keys it says `Cloud backup not configured` and nothing leaves the hub. `npm run check:bundle` proves no secret is in the web app.
+
 `npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through pairing, offline reporting, reconnect delivery and live assignment, and `npm run e2e:dashboard` runs a phone window and a dashboard window together through the full assign/done loop, both against the running hub (needs Edge or Chrome; set `E2E_ORIGIN`/`E2E_DB` to point it at a second hub started with `HTTPS_PORT=3553 DATA_DIR=... node server/dist/index.js`). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
 
 ### Layout
