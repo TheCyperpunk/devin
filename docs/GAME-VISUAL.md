@@ -137,24 +137,23 @@ Numbers use `font-variant-numeric: tabular-nums` so timers do not jitter.
 - End: map fades to 30%, a centred glass panel: Fraunces "First light", stars animate in, three stat rows with the
   2018 lines, crews ranked by people delivered, "Play again" / "Show the real tool" (opens the dashboard).
 
-## 6. Phone layout (390 × 844, works at 320)
+## 6. Phone layout (390 × 844, works at 320) — full-screen edition
+The order screen is the ward map, edge to edge, with the HUD floating over it. No app header while playing.
 ```
 ┌──────────────────────────┐
-│ ▮ Asha · Boat 1   R4 0:32│  top: crew colour chip, round, timer (lamp)
-│ ●●●● 3/4 aboard  💧🍚🩺  │  status strip: passengers, kits
-├──────────────────────────┤
-│   mini map (your area)   │  your node + neighbours only, calls as rings
-├──────────────────────────┤
-│  ▶ MOVE                  │  order list: 64px rows, one tap = select, second tap = confirm
-│    School · 1 call · 55  │
-│    Jetty                 │
-│  ▶ RESCUE 3 here         │
-│  ▶ DROP   💧 water       │
-│  ▶ RETURN to camp (2)    │
-├──────────────────────────┤
-│  Standing order: Return ▾│
-│ [  SEND ORDER  ] (lamp)  │
+│ ▮ Asha      Round 4  0:32│  floating top HUD: crew chip, round, timer (lamp)
+│ ▢▢▢▢ 3/4 aboard  💧🍚🩺  │  status strip; no-signal banner / round card stack under it
+│                          │
+│      the same WardMap    │  pan box: 230% wide, 140% tall, follows your boat (framed in
+│      as the big screen   │  your colour, labelled YOU); tap a place = target
+│                          │
+│ RADIO  Go to Vattappara  │  floating bottom HUD: radio suggestion (or the tapped place)
+│        4 waiting   [GO]  │  with one GO; "en route" line while a plan is queued
+│ You are at Jetty · ...   │  where you are, who is with you
+│ [ OR ONE MOVE AT A TIME ]│  opens the pull-up sheet
 └──────────────────────────┘
+sheet (slides up over the map, 78% max): single-move rows, SEND ORDER / QUEUE NEXT,
+"if I lose signal" hold/return, language toggle, ✕ to close.
 ```
 - Confirm: button fills left-to-right 300 ms, haptic `navigator.vibrate(20)`, row shows "sent ✓" and stays
   editable until the deadline ("change").

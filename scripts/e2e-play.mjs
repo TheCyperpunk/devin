@@ -102,6 +102,11 @@ try {
   const timer = await phones[0].$eval('[data-testid=timer]', (el) => el.innerText);
   ok(/^0:[0-3]\d$/.test(timer), `phone: countdown running (${timer})`);
   await phones[0].screenshot({ path: path.join(shots, '3-phone-order.png') });
+  await phones[0].click('[data-testid=orders-toggle]');
+  ok(await waitSel(phones[0], '.sheet.open [data-testid=send]'), 'phone: the by-hand sheet slides up');
+  await new Promise((r) => setTimeout(r, 400));
+  await phones[0].screenshot({ path: path.join(shots, '3b-phone-sheet.png') });
+  await phones[0].click('[data-testid=orders-toggle]');
 
   // ---- the radio: one tap sends Asha down the whole route to the suggested call; the map names the plan
   const ashaId = gameState().boats.find((b) => b.name === 'Asha').id;

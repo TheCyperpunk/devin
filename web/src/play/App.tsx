@@ -69,9 +69,11 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
   const view = state.view;
   const boat = myBoat(view, settings.deviceId);
   const statusText = state.hub === 'unknown' ? '…' : state.hub === 'online' ? t('hubOnline') : t('hubOffline');
+  const full = paired && !!view && !!boat && view.phase !== 'lobby' && view.phase !== 'ended';
 
   return (
     <>
+      {!full && (
       <header className="top">
         <span className="display logo">{t('appName')}</span>
         {paired && (
@@ -82,7 +84,8 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
         )}
         <LangToggle />
       </header>
-      <main className="stack">
+      )}
+      <main className={full ? 'fullmain' : 'stack'}>
         {!paired ? (
           <>
             {state.needsPairing ? (

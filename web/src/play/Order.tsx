@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME, KITS, type Boat, type GameView, type Order } from '@pralayam/shared';
 import { COLOR_PX } from '../game/sprites.js';
 import type { GameSync, GameSyncState } from '../lib/gameSync.js';
-import { useLang } from './lang.js';
+import { LangToggle, useLang } from './lang.js';
 import { NODES, estimatedRound, legalOrders, nodeName, routeOrders, suggest, ward, type OrderOption } from './orders.js';
 import { WardMap } from '../screen/Map.js';
 import { useTick } from './useGame.js';
@@ -24,6 +24,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const [target, setTarget] = useState<string | null>(null);
   const [sentAt, setSentAt] = useState<number | null>(null);
   const [warn, setWarn] = useState<{ steps: Order[]; target: string | null; mode: 'plan' | 'append' } | null>(null);
+  const [sheet, setSheet] = useState(false);
   const options = legalOrders(view, boat);
   const inZone = !(NODES[boat.nodeId]?.signal ?? true);
   const contact = state.hub === 'online' && !state.noSignal && !inZone && (state.viewAt === null || now - state.viewAt < 25_000);
@@ -37,12 +38,18 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const here = view.boats.filter((b) => b.id !== boat.id && b.nodeId === boat.nodeId).map((b) => b.name);
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // The map is drawn at twice the phone's width so sprites stay readable; keep the boat in the middle of the window.
+  // The map is drawn wider than the phone so sprites stay readable; keep the boat's place in the middle of the window.
   useEffect(() => {
     const box = mapRef.current;
-    const n = NODES[boat.nodeId];
-    if (!box || !n) return;
-    box.scrollTo({ left: Math.max(0, (n.x / 1000) * box.scrollWidth - box.clientWidth / 2), behavior: 'smooth' });
+    const el = box?.querySelector<SVGGElement>(`[data-node="${boat.nodeId}"]`);
+    if (!box || !el) return;
+    const b = box.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    box.scrollTo({
+      left: Math.max(0, box.scrollLeft + (r.left + r.width / 2 - b.left) - box.clientWidth / 2),
+      top: Math.max(0, box.scrollTop + (r.top + r.height / 2 - b.top) - box.clientHeight / 2),
+      behavior: 'smooth',
+    });
   }, [boat.nodeId]);
 
   // A new round clears the selection; mere revision bumps (another crew's order, a heartbeat) must not.
@@ -69,6 +76,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
     setSentAt(Date.now());
     setPicked(null);
     setTarget(null);
+    setSheet(false);
   }
   async function goWithReturn(w: NonNullable<typeof warn>) {
     if (boat.standingOrder !== 'return') await sync.submit({ type: 'standing', mode: 'return' }, 'append');
@@ -111,125 +119,152 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const targetCall = target ? view.calls.find((c) => c.status === 'open' && c.nodeId === target) : null;
 
   return (
-    <div className="stack" data-screen="order">
-      {!contact && (
-        <div className="banner" role="status" data-testid="no-signal">
-          <span className="radio-x">✕</span>
-          <span>
-            {state.hub === 'offline' ? t('hubOffline') : t('noSignal')}
-            {unapplied ? ` · ${t('ordersQueued', { n: unapplied })}` : ''}
-            <br />
-            <small>
-              {t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })} · ~{t('roundN', { n: round })}
-            </small>
-          </span>
-          <button type="button" className="btn small" onClick={() => void sync.retryNow()} data-testid="retry">
-            {t('retryNow')}
-          </button>
-        </div>
-      )}
-      {warn !== null && (
-        <div className="panel pad stack warn" role="alertdialog" aria-label={t('deadZoneTitle')} data-testid="dead-zone-warn">
-          <div className="display h2">{t('deadZoneTitle')}</div>
-          <p>{t('deadZoneBody')}</p>
-          <button type="button" className="btn lamp big" onClick={() => void goWithReturn(warn)} data-testid="go-return">
-            {t('deadZoneGoReturn')}
-          </button>
-          <button type="button" className="btn big" onClick={() => void go(warn.steps, warn.target, warn.mode, true)} data-testid="go-anyway">
-            {t('deadZoneGoAnyway')}
-          </button>
-          <button type="button" className="btn big ghost" onClick={() => setWarn(null)}>
-            {t('cancel')}
-          </button>
-        </div>
-      )}
-
-      <div className="strip">
-        <span className="hull" style={{ background: COLOR_PX[boat.color] }} />
-        <span className="who">{boat.name}</span>
-        <span className="round display">{contact ? t('roundN', { n: round }) : '~' + t('roundN', { n: round })}</span>
-        <span className={'timer display' + (contact && remaining > 0 && remaining < 10_000 ? ' low' : '')} data-testid="timer">
-          {view.phase === 'paused' ? t('paused') : contact && remaining > 0 ? clock(remaining) : '—'}
-        </span>
+    <div className="full" data-screen="order">
+      <div className={'phonemap mapfull' + (!contact ? ' dim' : '')} ref={mapRef}>
+        <WardMap
+          view={view}
+          me={boat.id}
+          target={highlighted}
+          path={routePath}
+          onPick={(id) => {
+            setTarget(id === boat.nodeId ? null : id);
+            setSheet(false);
+          }}
+          compact
+        />
       </div>
-      <div className="strip sub">
-        <span className="seats" aria-label={`${boat.passengers.length} of ${GAME.capacity} aboard`}>
-          {Array.from({ length: GAME.capacity }, (_, i) => (
-            <i key={i} className={i < boat.passengers.length ? 'on' : ''} />
-          ))}
-        </span>
-        <span>{t('aboardCount', { n: boat.passengers.length, max: GAME.capacity })}</span>
-        {unapplied > 0 && <span className="queued display" data-testid="queued">{t('ordersQueued', { n: unapplied })}</span>}
-        <span className="kits">
-          {KITS.map((k) => (
-            <span key={k} className={boat.kits[k] ? '' : 'out'}>
-              {KIT_ICON[k]}
-              {boat.kits[k]}
+
+      <div className="hud hud-top">
+        <div className="strip">
+          <span className="hull" style={{ background: COLOR_PX[boat.color] }} />
+          <span className="who">{boat.name}</span>
+          <span className="round display">{contact ? t('roundN', { n: round }) : '~' + t('roundN', { n: round })}</span>
+          <span className={'timer display' + (contact && remaining > 0 && remaining < 10_000 ? ' low' : '')} data-testid="timer">
+            {view.phase === 'paused' ? t('paused') : contact && remaining > 0 ? clock(remaining) : '—'}
+          </span>
+        </div>
+        <div className="strip sub">
+          <span className="seats" aria-label={`${boat.passengers.length} of ${GAME.capacity} aboard`}>
+            {Array.from({ length: GAME.capacity }, (_, i) => (
+              <i key={i} className={i < boat.passengers.length ? 'on' : ''} />
+            ))}
+          </span>
+          <span>{t('aboardCount', { n: boat.passengers.length, max: GAME.capacity })}</span>
+          {unapplied > 0 && (
+            <span className="queued display" data-testid="queued">
+              {t('ordersQueued', { n: unapplied })}
             </span>
-          ))}
-        </span>
-      </div>
-
-      {state.notice && (
-        <p className="notice" role="alert">
-          {state.notice === 'late' ? t('orderLate') : state.notice === 'invalid' ? t('orderInvalid') : state.notice === 'ended' ? t('nightOver') : t('errGeneric')}
-        </p>
-      )}
-      {state.lastRound && state.lastRoundAt !== null && now - state.lastRoundAt < 6000 && <RoundCard payload={state.lastRound} boatId={boat.id} lang={lang} />}
-
-      {/* the radio: one line, one button */}
-      <div className={'radio' + (tip ? '' : ' quiet')} data-testid="radio">
-        <span className="label">{t('radio')}</span>
-        <span className="txt">
-          {tip
-            ? tip.kind === 'call'
-              ? t('radioCall', { place: nodeName(tip.nodeId, lang), n: tip.people, prio: tip.priority ? t('radioPriority') : '' })
-              : t('radioReturn', { place: nodeName(tip.nodeId, lang) })
-            : t('radioQuiet')}
-          {tip && <small>{movesWord(tip.path.length)}</small>}
-        </span>
-        {tip && (
-          <button type="button" className="btn lamp" onClick={() => void go(tip.kind === 'call' ? routeOrders(boat.nodeId, tip.nodeId) : [{ type: 'return' }], tip.nodeId, 'plan')} data-testid="radio-go">
-            {t('go')}
-          </button>
-        )}
-      </div>
-
-      <div className={'phonemap' + (!contact ? ' dim' : '')} ref={mapRef}>
-        <WardMap view={view} me={boat.id} target={highlighted} path={routePath} onPick={(id) => setTarget(id === boat.nodeId ? null : id)} compact />
-      </div>
-      <p className="hint center">
-        {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
-        {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''} · {t('tapMap')}
-      </p>
-
-      {target && (
-        <div className="pick" data-testid="pick">
-          <span className="txt">
-            <b>{t('goTo', { place: nodeName(target, lang) })}</b> · {movesWord(ward.distance(boat.nodeId, target))}
-            {targetCall ? ' · ' + t('peopleWaiting', { n: targetCall.remaining }) : ''}
-            {!(NODES[target]?.signal ?? true) ? ' · ' + t('noSignalThere') : ''}
+          )}
+          <span className="kits">
+            {KITS.map((k) => (
+              <span key={k} className={boat.kits[k] ? '' : 'out'}>
+                {KIT_ICON[k]}
+                {boat.kits[k]}
+              </span>
+            ))}
           </span>
-          <div className="btns">
-            <button type="button" className="btn lamp" onClick={() => void go(routeOrders(boat.nodeId, target), target, 'plan')} data-testid="pick-go">
-              {t('go')}
+        </div>
+        {!contact && (
+          <div className="banner" role="status" data-testid="no-signal">
+            <span className="radio-x">✕</span>
+            <span>
+              {state.hub === 'offline' ? t('hubOffline') : t('noSignal')}
+              {unapplied ? ` · ${t('ordersQueued', { n: unapplied })}` : ''}
+              <br />
+              <small>
+                {t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })} · ~{t('roundN', { n: round })}
+              </small>
+            </span>
+            <button type="button" className="btn small" onClick={() => void sync.retryNow()} data-testid="retry">
+              {t('retryNow')}
             </button>
-            <button type="button" className="btn ghost" onClick={() => setTarget(null)}>
+          </div>
+        )}
+        {state.notice && (
+          <p className="notice" role="alert">
+            {state.notice === 'late' ? t('orderLate') : state.notice === 'invalid' ? t('orderInvalid') : state.notice === 'ended' ? t('nightOver') : t('errGeneric')}
+          </p>
+        )}
+        {state.lastRound && state.lastRoundAt !== null && now - state.lastRoundAt < 6000 && <RoundCard payload={state.lastRound} boatId={boat.id} lang={lang} />}
+      </div>
+
+      {warn !== null && (
+        <div className="modal">
+          <div className="panel pad stack warn" role="alertdialog" aria-label={t('deadZoneTitle')} data-testid="dead-zone-warn">
+            <div className="display h2">{t('deadZoneTitle')}</div>
+            <p>{t('deadZoneBody')}</p>
+            <button type="button" className="btn lamp big" onClick={() => void goWithReturn(warn)} data-testid="go-return">
+              {t('deadZoneGoReturn')}
+            </button>
+            <button type="button" className="btn big" onClick={() => void go(warn.steps, warn.target, warn.mode, true)} data-testid="go-anyway">
+              {t('deadZoneGoAnyway')}
+            </button>
+            <button type="button" className="btn big ghost" onClick={() => setWarn(null)}>
               {t('cancel')}
             </button>
           </div>
         </div>
       )}
 
-      {plan && unapplied > 0 && (
-        <div className="route" data-testid="route">
-          <span className="num">▶</span>
-          <span>{t('enRoute', { place: nodeName(plan.target, lang), n: unapplied })}</span>
+      <div className="hud hud-bottom">
+        {target ? (
+          <div className="pick" data-testid="pick">
+            <span className="txt">
+              <b>{t('goTo', { place: nodeName(target, lang) })}</b> · {movesWord(ward.distance(boat.nodeId, target))}
+              {targetCall ? ' · ' + t('peopleWaiting', { n: targetCall.remaining }) : ''}
+              {!(NODES[target]?.signal ?? true) ? ' · ' + t('noSignalThere') : ''}
+            </span>
+            <div className="btns">
+              <button type="button" className="btn lamp" onClick={() => void go(routeOrders(boat.nodeId, target), target, 'plan')} data-testid="pick-go">
+                {t('go')}
+              </button>
+              <button type="button" className="btn ghost" onClick={() => setTarget(null)}>
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={'radio' + (tip ? '' : ' quiet')} data-testid="radio">
+            <span className="label">{t('radio')}</span>
+            <span className="txt">
+              {tip
+                ? tip.kind === 'call'
+                  ? t('radioCall', { place: nodeName(tip.nodeId, lang), n: tip.people, prio: tip.priority ? t('radioPriority') : '' })
+                  : t('radioReturn', { place: nodeName(tip.nodeId, lang) })
+                : t('radioQuiet')}
+              {tip && <small>{movesWord(tip.path.length)}</small>}
+            </span>
+            {tip && (
+              <button type="button" className="btn lamp" onClick={() => void go(tip.kind === 'call' ? routeOrders(boat.nodeId, tip.nodeId) : [{ type: 'return' }], tip.nodeId, 'plan')} data-testid="radio-go">
+                {t('go')}
+              </button>
+            )}
+          </div>
+        )}
+        {plan && unapplied > 0 && !target && (
+          <div className="route" data-testid="route">
+            <span className="num">▶</span>
+            <span>{t('enRoute', { place: nodeName(plan.target, lang), n: unapplied })}</span>
+          </div>
+        )}
+        <div className="hudbar">
+          <span className="hint">
+            {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
+            {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''}
+          </span>
+          <button type="button" className="btn small" onClick={() => setSheet((s) => !s)} aria-expanded={sheet} data-testid="orders-toggle">
+            {t('orByHand')}
+          </button>
         </div>
-      )}
+      </div>
 
-      <details className="byhand">
-        <summary>{t('orByHand')}</summary>
+      <div className={'sheet' + (sheet ? ' open' : '')} data-testid="sheet" aria-hidden={!sheet}>
+        <div className="sheethead">
+          <span className="sect">{t('yourOrder')}</span>
+          <button type="button" className="btn small ghost" onClick={() => setSheet(false)} aria-label={t('cancel')}>
+            ✕
+          </button>
+        </div>
         <div className="rows" role="listbox" aria-label={t('yourOrder')}>
           {options.map((o, i) => (
             <button key={i} type="button" role="option" aria-selected={picked === i} className={'row' + (picked === i ? ' sel' : '') + (o.band ? ' band-' + o.band : '')} data-kind={o.kind} data-node={o.nodeId} onClick={() => setPicked(i)}>
@@ -250,18 +285,20 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
             {t('queueNext')}
           </button>
         )}
-      </details>
-
-      <div className="standing">
-        <span>{t('ifNoSignal')}</span>
-        <span className="seg" role="group" aria-label={t('ifNoSignal')}>
-          <button type="button" className={boat.standingOrder === 'hold' ? 'on' : ''} onClick={() => void sync.submit({ type: 'standing', mode: 'hold' }, 'append')}>
-            {t('hold')}
-          </button>
-          <button type="button" className={boat.standingOrder === 'return' ? 'on' : ''} onClick={() => void sync.submit({ type: 'standing', mode: 'return' }, 'append')}>
-            {t('returnHome')}
-          </button>
-        </span>
+        <div className="standing">
+          <span>{t('ifNoSignal')}</span>
+          <span className="seg" role="group" aria-label={t('ifNoSignal')}>
+            <button type="button" className={boat.standingOrder === 'hold' ? 'on' : ''} onClick={() => void sync.submit({ type: 'standing', mode: 'hold' }, 'append')}>
+              {t('hold')}
+            </button>
+            <button type="button" className={boat.standingOrder === 'return' ? 'on' : ''} onClick={() => void sync.submit({ type: 'standing', mode: 'return' }, 'append')}>
+              {t('returnHome')}
+            </button>
+          </span>
+        </div>
+        <div className="sheetfoot">
+          <LangToggle />
+        </div>
       </div>
     </div>
   );
