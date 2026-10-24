@@ -90,6 +90,8 @@ export const OrderSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('return') }),
   z.strictObject({ type: z.literal('hold') }),
   z.strictObject({ type: z.literal('standing'), mode: z.enum(['hold', 'return']) }),
+  /** Removes whatever is queued at this seq (the crew changed its plan). Never a turn. */
+  z.strictObject({ type: z.literal('cancel') }),
 ]);
 export type Order = z.infer<typeof OrderSchema>;
 

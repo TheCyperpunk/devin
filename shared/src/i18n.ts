@@ -93,6 +93,20 @@ const en = {
   deadZoneGoReturn: 'Set "Return" and go',
   deadZoneGoAnyway: 'Go anyway',
   cancel: 'Cancel',
+  radio: 'Radio',
+  radioCall: 'Go to {place}: {n} waiting{prio}',
+  radioPriority: ', children or elderly',
+  radioReturn: 'Boat full. Back to {place}',
+  radioQuiet: 'Nothing urgent near you. Pick a place on the map.',
+  go: 'Go',
+  movesAway: '{n} moves',
+  oneMove: '1 move',
+  tapMap: 'Tap a place on the map to go there',
+  goTo: 'Go to {place}',
+  enRoute: 'On the way to {place} · {n} moves left',
+  youAreAt: 'You are at {place}',
+  orByHand: 'Or one move at a time',
+  othersHere: 'Boats here: {names}',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -182,6 +196,20 @@ const ml: Record<StringKey, string> = {
   deadZoneGoReturn: '"മടങ്ങുക" സെറ്റ് ചെയ്ത് പോകുക',
   deadZoneGoAnyway: 'എന്തായാലും പോകുക',
   cancel: 'റദ്ദാക്കുക',
+  radio: 'റേഡിയോ',
+  radioCall: '{place}-ലേക്ക് പോകുക: {n} പേർ കാത്തിരിക്കുന്നു{prio}',
+  radioPriority: ', കുട്ടികളോ പ്രായമായവരോ',
+  radioReturn: 'ബോട്ട് നിറഞ്ഞു. {place}-ലേക്ക് മടങ്ങുക',
+  radioQuiet: 'അടുത്തൊന്നും അടിയന്തരമില്ല. മാപ്പിൽ ഒരു സ്ഥലം തൊടുക.',
+  go: 'പോകുക',
+  movesAway: '{n} നീക്കം',
+  oneMove: '1 നീക്കം',
+  tapMap: 'പോകാൻ മാപ്പിൽ ഒരു സ്ഥലം തൊടുക',
+  goTo: '{place}-ലേക്ക് പോകുക',
+  enRoute: '{place}-ലേക്ക് പോകുന്നു · {n} നീക്കം ബാക്കി',
+  youAreAt: 'നിങ്ങൾ {place}-ൽ ആണ്',
+  orByHand: 'അല്ലെങ്കിൽ ഓരോ നീക്കമായി',
+  othersHere: 'ഇവിടെയുള്ള ബോട്ടുകൾ: {names}',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ml };

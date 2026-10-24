@@ -1,7 +1,7 @@
 // The order picker only offers legal orders, most urgent move first; the round estimate while out of contact.
 import { describe, expect, it } from 'vitest';
 import { Ward, joinBoat, newGame, parseScenario, resolveRound, startGame, thuruthu, toView } from '@pralayam/shared';
-import { estimatedRound, legalOrders, myBoat } from './orders.js';
+import { estimatedRound, legalOrders, myBoat, routeOrders, suggest } from './orders.js';
 
 const scn = parseScenario(thuruthu);
 const ward = new Ward(scn);
@@ -51,6 +51,37 @@ describe('legalOrders', () => {
     const moves = legalOrders(view, myBoat(view, 'p1')!).filter((o) => o.kind === 'move');
     expect(moves[0]).toMatchObject({ nodeId: 'edakochi', deadZone: false, band: 'red' }); // medical + elderly + urgent
     expect(moves.find((m) => m.nodeId === 'bendhouse')).toMatchObject({ deadZone: true, people: 2 });
+  });
+});
+
+describe('suggest and routeOrders', () => {
+  it('names the most urgent reachable call at the start, with the path to it', () => {
+    const s = game();
+    const view = toView(s, ward, T, 1, 'p1');
+    const sug = suggest(view, myBoat(view, 'p1')!)!;
+    expect(sug.kind).toBe('call');
+    expect(['vattappara', 'pallithode']).toContain(sug.nodeId); // the two round-1 calls
+    expect(sug.path.length).toBe(2);
+    expect(sug.path.at(-1)).toBe(sug.nodeId);
+    expect(routeOrders('jetty', sug.nodeId)).toEqual(sug.path.map((nodeId) => ({ type: 'move', nodeId })));
+  });
+
+  it('sends a full boat home, and a boat with nothing left to do home too', () => {
+    let s = game();
+    s = { ...s, boats: s.boats.map((b) => ({ ...b, nodeId: 'vattappara', passengers: Array.from({ length: 4 }, () => ({ callId: 'x', priority: false, hospital: false })) })) };
+    let view = toView(s, ward, T, 1, 'p1');
+    expect(suggest(view, myBoat(view, 'p1')!)).toMatchObject({ kind: 'return', nodeId: 'camp', path: ['camp'] });
+    s = { ...s, calls: [], boats: s.boats.map((b) => ({ ...b, passengers: [{ callId: 'x', priority: false, hospital: false }] })) };
+    view = toView(s, ward, T, 1, 'p1');
+    expect(suggest(view, myBoat(view, 'p1')!)?.kind).toBe('return');
+  });
+
+  it('leaves a call to a boat that is already closer when another is available', () => {
+    let s = game();
+    s = { ...s, boats: [...s.boats, { ...s.boats[0]!, id: 'p2', name: 'Rahul', nodeId: 'kavala' }] }; // kavala touches both calls
+    const view = toView(s, ward, T, 1, 'p1');
+    const sug = suggest(view, myBoat(view, 'p1')!)!;
+    expect(sug.kind).toBe('call'); // nothing uncovered: still points at the most urgent one rather than nothing
   });
 });
 

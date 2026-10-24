@@ -39,6 +39,8 @@ export interface GameSyncState {
   notice: string | null;
   /** The hub is reachable but our boat is in a dead zone: it tells us nothing and takes nothing (D16). */
   noSignal: boolean;
+  /** The plan this phone last sent: where the boat is heading and how many moves that was. */
+  plan: { target: string; steps: number } | null;
   version: number;
 }
 
@@ -80,6 +82,7 @@ export class GameSync {
     clockOffset: 0,
     notice: null,
     noSignal: false,
+    plan: null,
     version: 0,
   };
   private listeners = new Set<Listener>();
@@ -194,27 +197,51 @@ export class GameSync {
    * yet (the crew changed their mind); `append` lines it up after everything already queued.
    */
   async submit(order: Order, mode: 'replace' | 'append' = 'replace'): Promise<void> {
+    if (order.type === 'standing') {
+      // Not a turn and never queued: it applies the moment it arrives, so it needs no place in the sequence.
+      const gameId = this.state.view?.id ?? (await getSettings()).gameId;
+      if (!gameId) return;
+      await addOrder({ id: this.env.uuid(), seq: 1, order, gameId, createdAtLocal: this.env.now(), attempts: 0, nextTryAt: 0 });
+      this.set({ unsent: await outboxCount(), notice: null });
+      this.changed();
+      void this.kick();
+      return;
+    }
+    if (mode === 'replace') return this.plan([order], null);
     const s = await getSettings();
     const gameId = this.state.view?.id ?? s.gameId;
     if (!gameId) return;
-    const pending = await pendingOrders();
-    const hubQueued = this.state.queued;
-    let seq = this.state.nextSeq;
-    if (mode === 'replace' && order.type !== 'standing') {
-      // a standing order waiting in the outbox is not a turn: never replace it
-      const turns = pending.filter((e) => e.order.type !== 'standing');
-      const last = turns.length ? turns[turns.length - 1]! : null;
-      if (last) {
-        seq = last.seq;
-        await dropOrders([last.id]);
-      } else if (hubQueued > 0) {
-        seq = this.state.nextSeq - 1;
-      }
-    }
-    const nextSeq = Math.max(this.state.nextSeq, seq + 1);
+    const seq = this.state.nextSeq;
     await addOrder({ id: this.env.uuid(), seq, order, gameId, createdAtLocal: this.env.now(), attempts: 0, nextTryAt: 0 });
+    await setSettings({ nextSeq: seq + 1, gameId });
+    this.set({ nextSeq: seq + 1, unsent: await outboxCount(), notice: null, plan: this.state.plan && { ...this.state.plan, steps: this.state.plan.steps + 1 } });
+    this.changed();
+    void this.kick();
+  }
+
+  /**
+   * "This is my plan now": the steps take the place of every order not yet played (one seq each, lowest first);
+   * any queued seq beyond the plan is cancelled. The boat then follows the plan round after round.
+   */
+  async plan(steps: Order[], target: string | null): Promise<void> {
+    const s = await getSettings();
+    const gameId = this.state.view?.id ?? s.gameId;
+    if (!gameId || steps.length === 0) return;
+    const pending = await pendingOrders();
+    const turns = pending.filter((e) => e.order.type !== 'standing');
+    const unapplied = this.state.queued + turns.length;
+    const base = this.state.nextSeq - unapplied;
+    await dropOrders(turns.map((e) => e.id));
+    const now = this.env.now();
+    for (let i = 0; i < steps.length; i++) {
+      await addOrder({ id: this.env.uuid(), seq: base + i, order: steps[i]!, gameId, createdAtLocal: now, attempts: 0, nextTryAt: 0 });
+    }
+    for (let seq = base + steps.length; seq < this.state.nextSeq; seq++) {
+      await addOrder({ id: this.env.uuid(), seq, order: { type: 'cancel' }, gameId, createdAtLocal: now, attempts: 0, nextTryAt: 0 });
+    }
+    const nextSeq = Math.max(this.state.nextSeq, base + steps.length);
     await setSettings({ nextSeq, gameId });
-    this.set({ nextSeq, unsent: await outboxCount(), notice: null });
+    this.set({ nextSeq, unsent: await outboxCount(), notice: null, plan: target ? { target, steps: steps.length } : null });
     this.changed();
     void this.kick();
   }
@@ -275,7 +302,8 @@ export class GameSync {
         await dropOrders(answered.map((r) => r.id)); // every answer settles the order: the hub has it, or it never will
         const unanswered = ids.filter((id) => !answered.some((r) => r.id === id));
         if (unanswered.length) await backoffOrders(unanswered, this.env.now());
-        const notice = noticeFor(answered);
+        const cancels = new Set(due.filter((e) => e.order.type === 'cancel').map((e) => e.id));
+        const notice = noticeFor(answered.filter((r) => !cancels.has(r.id)));
         if (notice) this.set({ notice });
         await this.merge(view);
         this.changed();
@@ -346,12 +374,13 @@ export class GameSync {
   private async applyYou(you: NonNullable<GameView['you']>): Promise<void> {
     const nextSeq = await this.nextSeqFrom(you.nextSeq);
     await setSettings({ nextSeq });
-    this.set({ queued: you.queued, nextSeq });
+    const unsent = await outboxCount();
+    this.set({ queued: you.queued, nextSeq, plan: you.queued + unsent === 0 ? null : this.state.plan });
   }
 
   /** The next seq must clear both what the hub has played/queued and what is still in the outbox. */
   private async nextSeqFrom(hubNext: number): Promise<number> {
-    const pending = await pendingOrders();
+    const pending = (await pendingOrders()).filter((e) => e.order.type !== 'standing');
     const maxPending = pending.reduce((m, e) => Math.max(m, e.seq), 0);
     return Math.max(hubNext, maxPending + 1, this.state.nextSeq);
   }

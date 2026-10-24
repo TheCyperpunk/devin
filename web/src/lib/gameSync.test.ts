@@ -221,6 +221,25 @@ describe('orders through the outbox', () => {
     expect(sync.state.nextSeq).toBe(2);
   });
 
+  it('a plan replaces every unapplied order, cancels the surplus, and the boat follows it round by round', async () => {
+    hub.open();
+    await begin();
+    await sync.plan([{ type: 'move', nodeId: 'kavala' }, { type: 'move', nodeId: 'vattappara' }, { type: 'return' }], 'vattappara');
+    await sync.kick();
+    expect(hubQueue()).toEqual([1, 2, 3]);
+    expect(sync.state.plan).toEqual({ target: 'vattappara', steps: 3 });
+    await sync.plan([{ type: 'move', nodeId: 'kumbalam' }], 'kumbalam'); // changed plan: shorter
+    await sync.kick();
+    expect(hubQueue()).toEqual([1]);
+    expect(hub.state!.queues[ME]![0]!.order).toEqual({ type: 'move', nodeId: 'kumbalam' });
+    expect(sync.state.nextSeq).toBe(4); // seqs are never reused downwards
+    expect(sync.state.notice).toBeNull(); // the cancels raised nothing
+    hub.resolve();
+    await sync.kick();
+    expect(sync.state.plan).toBeNull(); // nothing queued any more
+    expect(hub.state!.boats[0]!.nodeId).toBe('kumbalam');
+  });
+
   it('a standing order never replaces a queued move', async () => {
     hub.open();
     await begin();
@@ -229,6 +248,7 @@ describe('orders through the outbox', () => {
     await sync.kick();
     expect(hubQueue()).toEqual([1]);
     expect(hub.state!.boats[0]!.standingOrder).toBe('return');
+    expect(sync.state.nextSeq).toBe(2); // the standing order used no seq
   });
 });
 

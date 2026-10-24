@@ -169,6 +169,13 @@ export function queueOrder(state: GameState, boatId: string, input: QueuedOrderI
   if (input.seq <= (state.applied[boatId] ?? 0)) {
     return { state, result: { id: input.id, result: 'late', message: `Order ${input.seq} already played` } };
   }
+  if (input.order.type === 'cancel') {
+    const had = queue.some((q) => q.seq === input.seq);
+    return {
+      state: { ...state, queues: { ...state.queues, [boatId]: queue.filter((q) => q.seq !== input.seq) }, recent: { ...state.recent, [boatId]: remember(recent) } },
+      result: { id: input.id, result: had ? 'replaced' : 'queued', message: had ? 'Cancelled' : 'Nothing to cancel' },
+    };
+  }
   const entry = { id: input.id, seq: input.seq, order: input.order, receivedAt: now };
   const replaced = queue.some((q) => q.seq === input.seq);
   const next = [...queue.filter((q) => q.seq !== input.seq), entry].sort((a, b) => a.seq - b.seq);

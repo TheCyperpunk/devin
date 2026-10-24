@@ -108,6 +108,8 @@ function act(s: GameState, ward: Ward, b: Boat, order: Order, emit: (e: GameEven
     case 'standing':
       b.standingOrder = order.mode;
       return;
+    case 'cancel':
+      return; // never queued: queueOrder consumes it
     case 'move':
       b.plan = null;
       if (!ward.isAdjacent(from, order.nodeId)) return void emit({ type: 'invalid', boatId: b.id, nodeId: order.nodeId, points: 0 });

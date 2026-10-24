@@ -103,14 +103,26 @@ try {
   ok(/^0:[0-3]\d$/.test(timer), `phone: countdown running (${timer})`);
   await phones[0].screenshot({ path: path.join(shots, '3-phone-order.png') });
 
+  // ---- the radio: one tap sends Asha down the whole route to the suggested call; the map names the plan
+  const ashaId = gameState().boats.find((b) => b.name === 'Asha').id;
+  ok((await text(phones[0])).toLowerCase().includes('radio'), 'phone Asha: the radio suggests a place');
+  ok(await waitSel(phones[0], '[data-testid=radio-go]'), 'phone Asha: Go button on the suggestion');
+  await tap(phones[0], '[data-testid=radio-go]');
+  ok(await waitHub(() => received(ashaId) >= 2), 'hub: Go queued the whole route (two moves)');
+  ok(await waitSel(phones[0], '[data-testid=route]'), 'phone Asha: "on the way to … · 2 moves left"');
+  // tap a place on the map instead: the pick card, then Go, which replaces the plan
+  await phones[0].$eval('.phonemap [data-node=kumbalam]', (el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  ok(await waitSel(phones[0], '[data-testid=pick]'), 'phone Asha: tapping a house shows "Go to Kumbalam"');
+  await tap(phones[0], '[data-testid=pick-go]');
+  ok(await waitHub(() => (gameState().queues[ashaId] ?? []).length === 1 && gameState().queues[ashaId][0].order.nodeId === 'kumbalam'), 'hub: the new plan replaced the route (one move to Kumbalam, the rest cancelled)');
+
   // ---- Asha: move to kavala, then changes her mind to kumbalam (replace). Rahul: hold, then queues a move as next.
-  await tap(phones[0], '[data-screen=order] .row[data-node=kavala]');
+  await tap(phones[0], '[data-screen=order] .row[data-kind=move][data-node=kavala]');
   await tap(phones[0], '[data-testid=send]');
-  ok(await waitText(phones[0], '1 queued'), 'phone Asha: order sent and queued on the hub');
-  await tap(phones[0], '[data-screen=order] .row[data-node=kumbalam]');
+  ok(await waitHub(() => (gameState().queues[ashaId] ?? []).length === 1 && gameState().queues[ashaId][0].order.nodeId === 'kavala'), 'phone Asha: a single move replaces the plan on the hub');
+  await tap(phones[0], '[data-screen=order] .row[data-kind=move][data-node=kumbalam]');
   await tap(phones[0], '[data-testid=send]');
-  await sleep(600);
-  ok(await waitText(phones[0], '1 queued'), 'phone Asha: changing the order keeps one queued');
+  ok(await waitHub(() => (gameState().queues[ashaId] ?? []).length === 1 && gameState().queues[ashaId][0].order.nodeId === 'kumbalam'), 'phone Asha: changing the order keeps one queued (now Kumbalam)');
   await tap(phones[1], '[data-screen=order] .row[data-kind=hold]');
   await tap(phones[1], '[data-testid=send]');
   ok(await waitText(phones[1], '1 queued'), 'phone Rahul: hold queued');
@@ -133,8 +145,8 @@ try {
   ok(!/2 queued/.test(await text(phones[1])), 'phone Rahul: his queued orders were played in sequence');
   await phones[0].screenshot({ path: path.join(shots, '4-phone-round2.png') });
 
-  // ---- to first light
-  for (let i = 0; i < 9; i++) {
+  // ---- to first light (the hub may resolve a round early on its own, so skip until the button is gone)
+  for (let i = 0; i < 12 && (await screen.$('[data-host=skip-round]')); i++) {
     await clickHost(screen, 'skip-round');
     await sleep(250);
   }

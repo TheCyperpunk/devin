@@ -66,7 +66,9 @@ open  ──45 s or all orders in──▶ resolve (≤ 5 s animation) ──▶
 
 ## 4. Orders and resolution
 
-Order types: `move(nodeId)`, `rescue`, `drop(kit)`, `return`, `hold`, `standing(mode)`.
+Order types: `move(nodeId)`, `rescue`, `drop(kit)`, `return`, `hold`, `standing(mode)`, `cancel`.
+`cancel` removes whatever is queued at its seq and is never a turn: it is how a phone replaces a longer plan with a
+shorter one.
 `standing` is not a round action: it sets `standingOrder` immediately and does not use the crew's turn.
 **People climb aboard as a boat arrives** (G1 tuning: a separate rescue round made every trip six rounds long), so
 `rescue` is only needed when a boat is already there, for example when a new call opens under it or a second boat
@@ -157,6 +159,16 @@ End screen shows three numbers, each with one real line from 2018:
 - **Saved N of M** — "In 2018, fishermen's boats from the coast saved more people than any agency."
 - **Children and elderly first: X%** — "Call-centre volunteers triaged every call before passing it on."
 - **Rounds out of contact: Y** — "Networks faltered; WhatsApp groups became the control room."
+
+## 6b. Guidance on the phone (from the first playtest)
+The first playtest found crews clueless: they saw only three places, nothing of the other boats, and no hint of
+where help was needed. So the phone now shows the **whole ward** (every call, every boat, your boat and your route
+highlighted), a **radio line** naming the best place to go ("Go to Vattappara: 4 waiting, children or elderly ·
+2 moves") with one **Go** button that queues the whole route, **tap a place on the map to go there**, and an
+"on the way to … · n moves left" line. The radio uses the bots' instincts (urgency over distance, leave calls
+another boat is closer to), so a first-time player is never worse than a bot. Single moves are still there, folded
+under "Or one move at a time". A plan replaces every unplayed order (extra seqs are cancelled), so changing your mind
+is one tap.
 
 ## 7. Host controls (laptop, coordinator session)
 `New game` (scenario, round length 30/45/60 s, bots on/off), `Start` (from the lobby), `Skip round` (resolve

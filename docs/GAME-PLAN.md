@@ -76,6 +76,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Done: `GameService.hasSignal` + muted pushes (`ws.ts`), `{ noSignal: true }` answers in `gameRoutes.ts`; phone `gameSync` keeps orders with a 5 s retry while quiet and polls every 5 s; the order screen's banner shows the estimated round and the last update, the map dims, a prompt before entering a dead zone offers "Set Return and go"; the big screen shows "no signal since R<n>" in the crew list and on the boat; `docs/DEMO.md` has the words. The three-times-in-a-row gate on real phones is still to run by hand.
 
 ## G6 — Polish and playtest
+- **Usability pass 1 (done, from the first real playtest: "the phone player is clueless where to go, cannot see the others, takes random steps").** Whole-ward map on the phone with every call and boat, a radio suggestion with one-tap Go that queues the route, tap-a-place-to-go, "on the way" status, single moves folded away. Engine gained a `cancel` order so a new plan replaces an old route. Tests: engine cancel, sync plan, suggestion; `npm run e2e:play` covers Go and tap-to-go.
 - Sound on the screen, haptics on the phone, rain and reduced-motion, end-screen lines, Malayalam check by a
   native speaker, optional cloud upload of the final score (`scores` table, same backup pattern).
 - Playtest with five strangers; fix the three worst confusions; re-tune stars from real games.

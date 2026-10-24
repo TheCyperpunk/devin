@@ -151,6 +151,20 @@ describe('order queue (GAME-DESIGN 5.1)', () => {
     expect(s.applied.p1).toBe(3);
   });
 
+  it('cancel removes a queued seq (replaced) or nothing (queued), and never a played one (late)', () => {
+    let s = game();
+    s = queued(queued(s, 'p1', { type: 'move', nodeId: 'kavala' }), 'p1', { type: 'hold' });
+    let r = queueOrder(s, 'p1', order(2, { type: 'cancel' }), T);
+    expect(r.result.result).toBe('replaced');
+    expect(r.state.queues.p1!.map((q) => q.seq)).toEqual([1]);
+    r = queueOrder(r.state, 'p1', order(5, { type: 'cancel' }), T);
+    expect(r.result.result).toBe('queued');
+    expect(r.state.queues.p1!.map((q) => q.seq)).toEqual([1]);
+    s = round(r.state).state;
+    expect(queueOrder(s, 'p1', order(1, { type: 'cancel' }), T).result.result).toBe('late');
+    expect(boat(s).nodeId).toBe('kavala');
+  });
+
   it('allOrdersIn: only crews in contact count', () => {
     let s = game({ crews: ['p1', 'p2'] });
     expect(allOrdersIn(s, ward, T)).toBe(false);
