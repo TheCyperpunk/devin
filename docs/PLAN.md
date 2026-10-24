@@ -88,12 +88,13 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Fixed on the way: Leaflet threw when leaving the Map tab mid-animation (now `animate:false` + `stop()` before `remove()`); the phone showed its own draft note instead of the hub's, so a coordinator's note edit was invisible there.
 - Known limitations: dashboard is English only (by design: the coordinator is at the laptop); no CSV export or audit log yet (stretch); "Export DB" is Phase 8; tiles are never cached or pre-seeded (OSM policy).
 
-### Phase 7 — Cloud backup 🔶 (hub side built and unit-tested; live Supabase test pending the project keys)
+### Phase 7 — Cloud backup ✅ (12 unit tests + live run against a real Supabase project: 2 reports synced, a coordinator edit re-pushed within one 10 s pass, unreachable cloud → "offline, 1 waiting", bundle check clean)
 - `cloudSync.ts` per CONTRACT §9; `CloudStatus` banner on the dashboard.
 - **Gate:** Internet off → banner "Offline — N waiting", N rises → Internet on → "Synced", rows in Supabase. `grep` of `web/dist` finds no Supabase key.
 - Built: `server/src/cloudSync.ts` (every 10 s: pending = reports whose `revision > cloud_revision`; ping once, then upsert in chunks of 100 oldest-change-first, mark only the pushed revision so an edit during upload stays pending; status `not_configured | offline | syncing | synced` broadcast to dashboards only on change; `last_cloud_sync_at` kept in the database), `server/src/supabase.ts` (supabase-js with the secret key, `persistSession: false`), `db.ts` bookkeeping queries, wiring in `index.ts` (optional: both env vars or "not configured"). `npm run check:bundle` fails if any `.env` secret or Supabase marker is in `web/dist`.
 - 12 unit tests with a fake cloud: status transitions, column mapping, chunking, re-push after a coordinator change, edit-in-flight stays pending, failure → offline → retry, concurrent ticks, lastSyncAt survives restart.
 - Setup (one-time, by the team): Supabase project → SQL editor → run CONTRACT section 9 → copy Project URL and a secret (`sb_secret_…` or legacy `service_role`) key into `.env` → restart the hub. The hub prints `[cloud] backup to <host> every 10 s`.
+- Live gate (2026-10-25, project `devin` in ap-south-1, RLS on with no policies): hub started `synced 2`; `PATCH` assign → cloud row at the new revision after the next pass; `PATCH` back to open → re-pushed again; a second hub pointed at an unreachable host with one new report → `{"state":"offline","pending":1}` and `[cloud] ping failed: fetch failed` in the log; `npm run check:bundle` → clean. Remaining manual check for the demo: flip the laptop's Internet off/on and watch the dashboard header change.
 
 ### Phase 8 — Hardening
 - Error/empty/loading states, Retry button, double-submit guard, 48 px targets, contrast check, small-screen check.
