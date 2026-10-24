@@ -1,7 +1,7 @@
 // Tokens, bearer-auth middleware, error helper and in-memory rate limiting (D4, CONTRACT sections 3-4).
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import type { ApiErrorBody, ErrorCode } from '@relief-mesh/shared';
+import type { ApiErrorBody, ErrorCode } from '@pralayam/shared';
 import type { HubDb } from './db.js';
 
 export type Auth =

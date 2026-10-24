@@ -1,5 +1,5 @@
 // Host controls on the big screen: start, pause/resume, skip, end, new game, sound. All through the store.
-import type { GameView } from '@relief-mesh/shared';
+import type { GameView } from '@pralayam/shared';
 import type { ScreenStore } from './store.js';
 
 export function Host({ view, store, busy, sound }: { view: GameView | null; store: ScreenStore; busy: boolean; sound: boolean }) {

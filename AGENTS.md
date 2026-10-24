@@ -1,21 +1,22 @@
 # Rules for coding agents
 
-Read before any task: `docs/DECISIONS.md`, `docs/CONTRACT.md`, `docs/PLAN.md`.
+Read before any task: `docs/GAME-DESIGN.md`, `docs/GAME-CONTRACT.md`, `docs/GAME-VISUAL.md`, `docs/GAME-PLAN.md`,
+`docs/DECISIONS.md`.
 
-- Implement one phase from `docs/PLAN.md` per session. Do not start the next phase.
-- Offline-first: every feature must work with no Internet. The web app never calls an external URL. Only the hub talks to Supabase.
-- Stack is fixed (DECISIONS.md). Do not add frameworks, services or UI libraries without updating DECISIONS.md first.
-- Data shapes, endpoints, error codes and WS messages must match `docs/CONTRACT.md` (later `shared/contract.ts`). If a change is needed, update the contract in the same change.
-- The hub owns `status`, `assignee`, `revision`, timestamps and `baseScore`. Phone input schemas are `.strict()`.
-- Order by `revision`, never by wall-clock time. Merge incoming reports only if their `revision` is higher.
-- Phone writes go through the IndexedDB outbox. Never POST from a button handler.
+- Implement one G-phase from `docs/GAME-PLAN.md` per session. Do not start the next phase.
+- Offline-first: everything must work with no Internet. The web app never calls an external URL at runtime; fonts and
+  all assets are bundled.
+- Stack is fixed (DECISIONS.md): React + TypeScript + Vite + vite-plugin-pwa + idb on the web; Node 20 + Express + ws +
+  better-sqlite3 + zod on the hub. No new frameworks, services or UI libraries without updating DECISIONS.md first.
+- Game logic lives in `shared/src/game/` as pure functions with tests; the hub and the pages only call them. Round
+  resolution is deterministic; orders are strict zod schemas; the hub owns every derived field.
+- Phone writes go through the IndexedDB outbox (G4). Never POST from a button handler. Orders are idempotent by id.
 - Identity comes from the bearer token, never from IDs in the request body.
-- Never log request bodies, names, coordinates or notes. Never put secrets in `VITE_*` variables or the web bundle.
+- The look is the pixel edition (GAME-VISUAL §0): 16-colour palette, Press Start 2P + Pixelify Sans, sprites from
+  `web/src/screen/sprites.ts`, square boxes with hard shadows, `steps()` motion. No gradients, blur, rounded corners
+  or eased animation in the game.
+- Never log request bodies or names. Never put secrets in `VITE_*` variables or the web bundle.
 - Never commit `certs/`, `.env`, or `server/data/`.
 - TypeScript strict. Keep files small, with one short comment at the top of each file saying what it does.
-- After each task, run `npm test` and `npm run build`, then report: files changed, commands to run, and the manual gate steps.
-
-## Game (Pralayam) tasks
-Read `docs/GAME-DESIGN.md`, `docs/GAME-CONTRACT.md`, `docs/GAME-VISUAL.md`, `docs/GAME-PLAN.md` too. Implement one G-phase per
-session. Never change Relief Mesh behaviour in a game phase. Game logic goes in `shared/src/game/` as pure functions
-with tests; the hub and the pages only call them. Orders go through the outbox like reports. No remote URL at runtime.
+- After each task, run `npm test` and `npm run build`, then report: files changed, commands to run, and the manual
+  gate steps.

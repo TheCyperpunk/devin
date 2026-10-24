@@ -1,4 +1,4 @@
-// Fails if any secret from .env (or any Supabase marker) appears in the built web app (D10: server-only secrets).
+// Fails if the host passcode (or a secret-looking marker) appears in the built web app: secrets stay on the hub.
 // Usage: npm run check:bundle   (after npm run build)
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -13,16 +13,11 @@ if (!existsSync(dist)) {
 
 const env = existsSync(path.join(root, '.env')) ? readFileSync(path.join(root, '.env'), 'utf8') : '';
 const secrets = [];
-for (const key of ['SUPABASE_SECRET_KEY', 'SUPABASE_URL', 'COORDINATOR_PASSCODE']) {
+for (const key of ['COORDINATOR_PASSCODE']) {
   const m = env.match(new RegExp(`^${key}=(.+)$`, 'm'));
   if (m && m[1].trim().length >= 8) secrets.push({ name: key, value: m[1].trim() });
 }
-const markers = [
-  { name: 'Supabase secret key prefix', value: 'sb_secret_' },
-  { name: 'Supabase service_role marker', value: 'service_role' },
-  { name: 'supabase.co host', value: '.supabase.co' },
-  { name: 'supabase-js client', value: 'supabase-js' },
-];
+const markers = [{ name: 'secret key prefix', value: 'sb_secret_' }];
 
 const files = [];
 (function walk(d) {

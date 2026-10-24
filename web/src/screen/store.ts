@@ -1,10 +1,9 @@
 // Big-screen state: host session, the latest GameView (merged by revision), live socket with catch-up, the last
 // round's events for animation, toasts, host actions. Same shape as the dashboard store: the outside world comes
 // in through ScreenEnv so tests can fake it.
-import { TIMING, clockOffset, type GameRoundPayload, type GameView, type ServerMessage } from '@relief-mesh/shared';
+import { TIMING, clockOffset, type GameRoundPayload, type GameView, type JoinInfo, type ServerMessage } from '@pralayam/shared';
 import { ApiFail } from '../lib/api.js';
 import type { SocketHandlers, SocketLike } from '../lib/socket.js';
-import type { JoinInfo } from '../dashboard/api.js';
 import type { HostAction, NewGameBody, ScreenApi } from './api.js';
 import { toastFor, type Toast } from './format.js';
 
@@ -309,3 +308,6 @@ function parse(data: string): ServerMessage | null {
     return null;
   }
 }
+
+/** Where the host session lives between reloads (sessionStorage). */
+export const SESSION_KEY = 'pralayam.session';

@@ -1,43 +1,48 @@
-# Relief Mesh
+# Pralayam (പ്രളയം)
 
-A local relief hub for flood response in Kochi. Volunteers report needs from their phones, and a coordinator triages them on a laptop. Everything runs over local Wi-Fi with no Internet. When the Internet returns, the hub backs up to the cloud.
+A co-op flood-night rescue game for everyone in the room: the laptop projects a pixel-art ward, every phone becomes a
+boat, and the signal dead zones on the map are real: your phone really loses the hub there and your orders queue until
+you are back in range. Built for Devin Hacks Kochi, tracks 3 ("Works Anyway") and 4 ("Make Room for Play"). No Internet
+is needed at any point: a local hub on the laptop runs the whole night over Wi-Fi or a hotspot.
 
-Status: **Phase 8 built** — the whole loop works: volunteers report (even offline), reports reach the hub on reconnect, the coordinator sees them live, assigns and closes them, the phone shows the outcome, and when the Internet is up the hub backs every change up to Supabase (verified live). The dashboard's **Export DB** button downloads the whole database as a SQLite file for a spare laptop. Left: the Phase 8 usability gate with a teammate, the Phase 9 integration run on real phones, and demo prep.
-
-**Pralayam** (Track 3 + 4): a co-op flood-night rescue game on the same hub, where signal dead zones are real offline play. Design in `docs/GAME-*.md`. Done: rules engine (`npm run sim`), hub game service (`/api/game/*`), big screen at `https://<HUB_IP>:3443/screen.html` (coordinator passcode; open a lobby, start a bot night, skip rounds). Next: the phone play screens.
-
+- [docs/GAME-DESIGN.md](docs/GAME-DESIGN.md) — the rules
+- [docs/GAME-CONTRACT.md](docs/GAME-CONTRACT.md) — data, endpoints, WebSocket, phone storage
+- [docs/GAME-VISUAL.md](docs/GAME-VISUAL.md) — the pixel design system
+- [docs/GAME-PLAN.md](docs/GAME-PLAN.md) — phases and gates
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
-- [docs/CONTRACT.md](docs/CONTRACT.md) — data model, API, WebSocket, storage
-- [docs/PLAN.md](docs/PLAN.md) — phases and test gates
 - [AGENTS.md](AGENTS.md) — rules for coding agents
+
+## Status
+
+Done: rules engine with bots and a simulator (`npm run sim`), the hub game service (`/api/game/*`), the big screen
+(`/screen.html`), and the phone's pairing, boat colour and lobby. Next: the phone's order picker through the outbox
+(G4), real dead-zone play (G5), polish and playtests (G6).
 
 ## Run it
 
-Needs Node 20+ and [mkcert](https://github.com/FiloSottile/mkcert) (`winget install FiloSottile.mkcert` / `brew install mkcert`).
+Needs Node 20+ and [mkcert](https://github.com/FiloSottile/mkcert) (`winget install FiloSottile.mkcert` /
+`brew install mkcert`).
 
-```sh
+```
 npm install
-cp .env.example .env        # set HUB_IP to the laptop's IP, and COORDINATOR_PASSCODE to a real secret (8+ chars)
-npm run certs               # one-time per IP; Windows shows a dialog — click Yes
+copy .env.example .env        # set HUB_IP to the laptop's fixed IP and a COORDINATOR_PASSCODE of 8+ characters
+npm run certs                 # mkcert root CA + hub certificate for HUB_IP (service workers need HTTPS)
 npm run build
 npm start
 ```
 
-- Hub (phones + dashboard): `https://<HUB_IP>:3443` — dashboard at `/dashboard.html` (needs `COORDINATOR_PASSCODE`; the Join tab shows the QR and join code for phones)
-- Setup page for phones: `http://<HUB_IP>:8080` (download + trust the certificate, then open the hub)
+- Big screen: `https://<HUB_IP>:3443/screen.html` on the laptop, host passcode from `.env`. Open the lobby, Start.
+- Phones: join the same Wi-Fi, open `http://<HUB_IP>:8080` once to trust the hub certificate, then scan the QR on the
+  big screen (or open `https://<HUB_IP>:3443` and type the join code). Add to the home screen.
+- Watch bots play a night in the terminal: `npm run sim` (or `npm run sim 5` for five boats).
 
-### Cloud backup (optional)
-
-Create a Supabase project, run the SQL from [docs/CONTRACT.md](docs/CONTRACT.md) section 9 in its SQL editor, then put the project URL and a **secret** key (never the anon/publishable one) in `.env` as `SUPABASE_URL` and `SUPABASE_SECRET_KEY` and restart the hub. The dashboard header then shows `Offline — N waiting` / `Syncing…` / `Synced`. Without the keys it says `Cloud backup not configured` and nothing leaves the hub. `npm run check:bundle` proves no secret is in the web app.
-
-`npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through pairing, offline reporting, reconnect delivery and live assignment, and `npm run e2e:dashboard` runs a phone window and a dashboard window together through the full assign/done loop, both against the running hub (needs Edge or Chrome; set `E2E_ORIGIN`/`E2E_DB` to point it at a second hub started with `HTTPS_PORT=3553 DATA_DIR=... node server/dist/index.js`). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
-
-### Layout
+## Develop
 
 ```
-shared/   constants, zod contract, urgency scoring — used by server and web
-server/   Express HTTPS hub on :3443, HTTP setup server on :8080
-web/      Vite + React PWA: index.html (volunteer), dashboard.html (coordinator)
-scripts/  make-certs.ts
-certs/    mkcert output (gitignored)
+npm test                 # unit tests across shared, server and web
+npm run typecheck
+npm run e2e:screen       # real-browser run of the big screen against a running hub (E2E_ORIGIN for a second hub)
+npm run check:bundle     # proves the passcode is not in the web bundle
 ```
+
+Never commit `certs/`, `.env` or `server/data/`.

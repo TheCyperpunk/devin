@@ -1,12 +1,11 @@
 # Pralayam — data contract
 
-Additions to `CONTRACT.md` for the game. Same rules apply: identity from the bearer token, phone inputs strict,
-the hub owns every derived field, order by revision, the phone writes through the outbox. Types will live in
-`shared/src/game/contract.ts` (zod) once G1 starts.
+The game's data contract. Rules: identity from the bearer token, phone inputs strict, the hub owns every derived
+field, order by revision, the phone writes through the outbox. Types live in `shared/src/game/contract.ts` (zod).
 
 ## 1. Roles and auth
-- **Crew** = a paired Relief Mesh device (same `/api/pair` flow, same device token). `reporterName` is the crew name.
-- **Host / big screen** = the coordinator session (same `/api/dashboard/login`).
+- **Crew** = a paired phone (`POST /api/pair` with the join code; device token). `reporterName` is the crew name.
+- **Host / big screen** = the host session (`POST /api/host/login` with the passcode).
 - WS: the existing `/ws` socket with the existing `auth` handshake; game messages are added to it.
 
 ## 2. Revision
@@ -97,7 +96,7 @@ interface GameView extends Omit<GameState, 'queues' | 'applied' | 'rng'> {
 }
 ```
 
-### 4.3 Phone-side (IndexedDB, same database as Relief Mesh)
+### 4.3 Phone-side (IndexedDB `pralayam`)
 - store `gameOutbox` keyed by order `id`: `{ id, seq, order, createdAtLocal, attempts, nextTryAt, outcome? }`.
 - `settings.game`: `{ gameId, lastView: GameView, receivedAt, nextSeq, color }`.
 - Backoff and reconnect rules identical to reports (D8). A new `gameId` from the hub clears the outbox and

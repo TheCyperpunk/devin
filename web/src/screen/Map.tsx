@@ -2,7 +2,7 @@
 // channel with banks that widens as the water rises, black sprite outlines, lit-window halos, idle bob on boats,
 // diagonal rain with the odd lightning flash, and floating score pops. Everything is rects on a 4-unit grid.
 import { useMemo } from 'react';
-import { GAME, thuruthu, type GameEvent, type GameView, type ScenarioNode } from '@relief-mesh/shared';
+import { GAME, thuruthu, type GameEvent, type GameView, type ScenarioNode } from '@pralayam/shared';
 import { NODES, initials } from './format.js';
 import { COLOR_PX, P, PX, SPRITES, snap, spriteRects, type SpriteName } from './sprites.js';
 
@@ -39,6 +39,9 @@ function channelPath(e: { x: number; top: number; bottom: number }[]): string {
 const PALMS: [number, number, boolean][] = [
   [64, 180, false], [112, 64, true], [230, 56, false], [440, 72, true], [620, 150, false], [690, 56, true], [960, 96, false],
   [980, 300, true], [60, 388, true], [330, 586, false], [500, 590, true], [720, 598, false], [900, 598, true], [1000, 420, true], [200, 596, true],
+  // in the gutters beyond the viewBox, for wide or tall projectors
+  [-70, 120, false], [-110, 330, true], [-50, 560, false], [-160, 460, true], [1070, 140, false], [1110, 380, true], [1060, 590, false], [1170, 250, true],
+  [120, -40, true], [520, -60, false], [880, -30, true], [300, 660, false], [700, 650, true], [1000, 680, false],
 ];
 
 /** Dead-zone clusters (connected nodes without signal) and where to write their label. */
@@ -131,20 +134,21 @@ export function WardMap({ view, dim, pops = [] }: { view: GameView | null; dim?:
       viewBox="0 0 1000 600"
       preserveAspectRatio="xMidYMid meet"
       shapeRendering="crispEdges"
+      overflow="visible"
       role="img"
       aria-label={view ? `Map of ${thuruthu.name}, round ${view.round}` : 'Map of Thuruthu ward'}
     >
       <defs>
         <pattern id="land" width="32" height="32" patternUnits="userSpaceOnUse">
-          <rect width="32" height="32" fill="#182238" />
-          <rect x="4" y="8" width="4" height="4" fill="#1c2b55" />
-          <rect x="20" y="20" width="4" height="4" fill="#1c2b55" />
-          <rect x="12" y="24" width="8" height="2" fill="#20364a" />
-          <rect x="24" y="4" width="4" height="2" fill="#20364a" />
+          <rect width="32" height="32" fill="#1a2a4d" />
+          <rect x="4" y="8" width="4" height="4" fill="#27407a" />
+          <rect x="20" y="20" width="4" height="4" fill="#27407a" />
+          <rect x="12" y="24" width="8" height="2" fill="#2d6b57" />
+          <rect x="24" y="4" width="4" height="2" fill="#2d6b57" />
         </pattern>
         <pattern id="deep" width="8" height="8" patternUnits="userSpaceOnUse">
-          <rect width="4" height="4" fill="#17586f" />
-          <rect x="4" y="4" width="4" height="4" fill="#17586f" />
+          <rect width="4" height="4" fill="#1e6f94" />
+          <rect x="4" y="4" width="4" height="4" fill="#1e6f94" />
         </pattern>
         <pattern id="checker" width="8" height="8" patternUnits="userSpaceOnUse">
           <rect width="4" height="4" fill={P.grey} opacity=".22" />
@@ -171,14 +175,15 @@ export function WardMap({ view, dim, pops = [] }: { view: GameView | null; dim?:
       </defs>
 
       {/* land */}
-      <rect width="1000" height="600" fill="url(#land)" />
+      {/* the land runs past the viewBox so the tile world fills whatever the projector is */}
+      <rect x="-1200" y="-800" width="3400" height="2200" fill="url(#land)" />
       {zones.map((z) =>
         z.nodes.map((n) => <rect key={n.id} x={snap(n.x) - 60} y={snap(n.y) - 60} width="120" height="120" fill={z.paddy ? 'url(#paddy)' : 'url(#checker)'} />),
       )}
 
       {/* river channel: widens upward with the level; foam on the edges, dither in the deep */}
       <g key={water} className="river splash">
-        <path d={channel} fill={P.water1} />
+        <path d={channel} fill="#2a8fb8" />
         <path d={channel} fill="url(#deep)" opacity=".7" />
         <path d={channel} fill="none" stroke={P.foam} strokeWidth="2" opacity=".8" />
         <g className="waveA">
@@ -211,7 +216,7 @@ export function WardMap({ view, dim, pops = [] }: { view: GameView | null; dim?:
         {thuruthu.edges.map(([a, b]) => (
           <g key={a + b}>
             <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke={P.black} strokeWidth="6" opacity=".5" />
-            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke={P.wood} strokeWidth="2" strokeDasharray="8 4" opacity=".9" />
+            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke="#b7874a" strokeWidth="2" strokeDasharray="8 4" opacity=".95" />
           </g>
         ))}
       </g>

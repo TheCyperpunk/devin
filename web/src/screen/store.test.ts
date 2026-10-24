@@ -1,7 +1,7 @@
 // ScreenStore against a fake hub: login, catch-up by revision, "unchanged", no game, socket pushes (state merged
 // only when newer, rounds become toasts), host actions, session expiry.
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Ward, joinBoat, newGame, parseScenario, resolveRound, startGame, thuruthu, toView, type GameRoundPayload, type GameState, type GameView } from '@relief-mesh/shared';
+import { Ward, joinBoat, newGame, parseScenario, resolveRound, startGame, thuruthu, toView, type GameRoundPayload, type GameState, type GameView } from '@pralayam/shared';
 import { ApiFail } from '../lib/api.js';
 import type { SocketHandlers } from '../lib/socket.js';
 import type { ScreenApi } from './api.js';

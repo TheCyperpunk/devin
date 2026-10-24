@@ -1,7 +1,8 @@
 # Pralayam — implementation plan
 
-One phase per session, same discipline as `PLAN.md`: tests and build green, then the manual gate. Relief Mesh
-(Phases 0–8) is untouched by every phase here; the game is added beside it on the same hub.
+One phase per session: tests and build green, then the manual gate. (Relief Mesh, the relief tool this grew from,
+was removed on 2026-10-25; the hub infrastructure it built stays. The phone app at `/` already pairs, picks a boat colour
+and joins the lobby; G4 adds the order picker.)
 Design: `GAME-DESIGN.md` (rules), `GAME-CONTRACT.md` (data), `GAME-VISUAL.md` (look).
 Visual mock: open `docs/design/pralayam-mock.html` in a browser (big screen round + end, three phone screens), or the
 design canvas at https://claude.ai/artifact/Aa7Qrj4PnwupwLE5RwQBSx (six artboards: lobby, round, first light, phone order,
@@ -18,7 +19,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - `shared/src/game/state.ts` — `newGame(scenario, opts)`, `joinBoat`, `queueOrder` (seq/replace/duplicate/late),
   `addBots`.
 - `shared/src/game/resolve.ts` — `resolveRound(state, rng)` exactly as GAME-DESIGN §4, returns `{ state, events }`.
-- `shared/src/game/urgency.ts` — call score from the Relief Mesh engine + water bonus; `view(state, now)`.
+- `shared/src/game/urgency.ts` — call score from the shared urgency engine + water bonus; `view(state, now)`.
 - `shared/src/game/bots.ts` — greedy bot: nearest highest-urgency call, rescue, return when full.
 - `shared/src/game/rng.ts` — seeded xorshift so games replay exactly.
 - `scripts/sim.ts` — `npm run sim -- --bots 3 --seed 7` plays a full game in < 50 ms and prints the round log,
@@ -57,7 +58,7 @@ phone no-signal, phone result; private until shared from its Share menu).
   backoff/reconnect rules as reports; `useGame.ts`.
 - `web/src/play/` — `Lobby.tsx` (crew colour), `Order.tsx` (status strip, mini map, order rows, standing order,
   Send), `Result.tsx` (round card), `End.tsx`; Malayalam strings in `shared/i18n.ts`.
-- Reuses the Pair screen: an unpaired phone opening `/play` goes through the same join code.
+- The phone app at `/` (`web/src/play/`) already pairs, picks a colour and joins; G4 adds the order picker and the outbox to it.
 - Tests: gameSync against a fake hub (queue, replace, duplicate on retry, late, new gameId clears the outbox);
   order picker only offers legal orders (adjacent moves, rescue only where a call is).
 - e2e: three phone tabs + screen play a full game.
@@ -76,7 +77,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Sound on the screen, haptics on the phone, rain and reduced-motion, end-screen lines, Malayalam check by a
   native speaker, optional cloud upload of the final score (`scores` table, same backup pattern).
 - Playtest with five strangers; fix the three worst confusions; re-tune stars from real games.
-- Rehearse the full 5-minute demo three times with the Relief Mesh switch at the end.
+- Rehearse the full 5-minute demo three times.
 - **Gate:** strangers finish a game with no help and say what they would do differently next time.
 
 ## Commands (once G1 lands)
@@ -84,5 +85,4 @@ phone no-signal, phone result; private until shared from its Share menu).
 (serves `/`, `/dashboard.html`, `/screen.html`, `/play` from one hub).
 
 ## Fallback
-If G5 is not done by demo day, demo G3 (bot game on the screen) + Relief Mesh. If G3 is not done, demo Relief
-Mesh alone: it is complete.
+If G5 is not done by demo day, demo G3 (a bot night on the screen) with phones joining the lobby.

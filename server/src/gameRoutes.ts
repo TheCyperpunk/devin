@@ -2,7 +2,7 @@
 // and the big screen the coordinator session. Identity always comes from the token, never from the body.
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
-import { JoinRequestSchema, OrdersEnvelopeSchema } from '@relief-mesh/shared';
+import { JoinRequestSchema, OrdersEnvelopeSchema } from '@pralayam/shared';
 import { authOf, bearer, fail, requireRole, resolveToken } from './auth.js';
 import type { HubDb } from './db.js';
 import type { GameService } from './game.js';

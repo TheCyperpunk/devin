@@ -19,7 +19,7 @@ export function createSetupApp() {
       return;
     }
     res.setHeader('Content-Type', 'application/x-x509-ca-cert');
-    res.setHeader('Content-Disposition', `attachment; filename="relief-mesh-rootCA.${ext}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="pralayam-rootCA.${ext}"`);
     const pem = readFileSync(certPaths.rootCA);
     res.send(ext === 'pem' ? pem : new X509Certificate(pem).raw);
   };
@@ -39,7 +39,7 @@ function renderSetupPage(hubUrl: string, setupUrl: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Relief Mesh setup</title>
+<title>Pralayam setup</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; max-width: 560px; line-height: 1.5; }
   h1 { font-size: 1.5rem; }
@@ -51,7 +51,7 @@ function renderSetupPage(hubUrl: string, setupUrl: string): string {
 </style>
 </head>
 <body>
-<h1>Relief Mesh — connect this phone</h1>
+<h1>Pralayam — connect this phone</h1>
 <p>You are on <code>${setupUrl}</code>. Three steps:</p>
 <ol>
   <li><a class="btn" href="/rootCA.crt">1. Download the certificate</a>
@@ -60,7 +60,7 @@ function renderSetupPage(hubUrl: string, setupUrl: string): string {
     <details open><summary>Android</summary>
       Settings → search <strong>“CA certificate”</strong> (or Security &amp; privacy → More security settings → Install from device storage) →
       choose <strong>CA certificate</strong> (not “VPN &amp; app user” or “Wi-Fi”) → <strong>Install anyway</strong> →
-      pick <code>relief-mesh-rootCA.crt</code> from Downloads. Then fully close Chrome and reopen it.
+      pick <code>pralayam-rootCA.crt</code> from Downloads. Then fully close Chrome and reopen it.
       Check: Settings → Trusted credentials → User tab should list <em>mkcert</em>.
     </details>
     <details><summary>iPhone</summary>

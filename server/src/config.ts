@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PORTS } from '@relief-mesh/shared';
+import { PORTS } from '@pralayam/shared';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // Works from both server/src (tsx) and server/dist (node)
@@ -17,9 +17,6 @@ export const config = {
   httpsPort: Number(process.env.HTTPS_PORT ?? PORTS.https),
   setupPort: Number(process.env.SETUP_PORT ?? PORTS.setup),
   coordinatorPasscode: process.env.COORDINATOR_PASSCODE ?? '',
-  // Server-only. Never exposed to the web app (D10).
-  supabaseUrl: (process.env.SUPABASE_URL ?? '').trim(),
-  supabaseSecretKey: (process.env.SUPABASE_SECRET_KEY ?? '').trim(),
   certsDir: path.join(repoRoot, 'certs'),
   webDist: path.join(repoRoot, 'web', 'dist'),
   dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(repoRoot, 'server', 'data'),
@@ -40,7 +37,7 @@ export function assertCertsExist(): void {
   }
 }
 
-/** The dashboard passcode guards every report on the hotspot, so a missing or sample value is refused. */
+/** The host passcode guards the game controls, so a missing or sample value is refused. */
 export function assertPasscode(): void {
   const p = config.coordinatorPasscode;
   if (p.length < 8 || p.startsWith('change-me')) {

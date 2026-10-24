@@ -1,5 +1,5 @@
 // "First light": stars, three numbers with one real line from 2018 each, crews ranked, play again / the real tool.
-import type { GameView } from '@relief-mesh/shared';
+import type { GameView } from '@pralayam/shared';
 import { Star, padScore } from './Bars.js';
 import { COLOR_HEX, totals } from './format.js';
 import type { ScreenStore } from './store.js';
@@ -52,13 +52,10 @@ export function EndScreen({ view, store, busy }: { view: GameView; store: Screen
           {t.lost > 0 && <span className="hint lost">{t.lost} lost to the water</span>}
         </div>
         <div className="actions">
-          <span className="hint">Every order from every phone arrived exactly once, even from the dead zones.</span>
+          <span className="hint">Every order from every phone arrived exactly once, even from the dead zones. Works with no Internet.</span>
           <button type="button" className="btn lamp" disabled={busy} onClick={() => void store.newGame({})} data-host="new">
             Play again
           </button>
-          <a className="btn ghost" href="/dashboard.html">
-            Show the real tool
-          </a>
         </div>
       </div>
     </div>

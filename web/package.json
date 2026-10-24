@@ -1,5 +1,5 @@
 {
-  "name": "@relief-mesh/web",
+  "name": "@pralayam/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -14,14 +14,12 @@
     "@fontsource/noto-sans-malayalam": "^5.2.6",
     "@fontsource/pixelify-sans": "^5.2.6",
     "@fontsource/press-start-2p": "^5.2.6",
-    "@relief-mesh/shared": "*",
+    "@pralayam/shared": "*",
     "idb": "^8.0.0",
-    "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.14",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",

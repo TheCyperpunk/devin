@@ -1,11 +1,11 @@
-// Smoke test so `npm test` has something to run before Phase 3 adds the urgency tests.
+// Smoke test for the shared constants.
 import { describe, expect, it } from 'vitest';
-import { LIMITS, TIMING } from './index.js';
+import { GAME, LIMITS, TIMING } from './index.js';
 
 describe('shared constants', () => {
-  it('keeps the contract limits', () => {
-    expect(LIMITS.batchMax).toBe(50);
-    expect(LIMITS.noteMax).toBe(280);
+  it('keeps the limits the hub and the phone agree on', () => {
+    expect(LIMITS.nameMax).toBe(60);
     expect(TIMING.backoffMaxMs).toBe(30000);
+    expect(GAME.capacity).toBe(4);
   });
 });

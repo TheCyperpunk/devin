@@ -1,5 +1,5 @@
 // Tiny synthesized sounds (GAME-VISUAL section 8): no audio files, nothing downloaded. Muted until the host taps the speaker.
-import type { GameRoundPayload } from '@relief-mesh/shared';
+import type { GameRoundPayload } from '@pralayam/shared';
 
 let ctx: AudioContext | null = null;
 function audio(): AudioContext | null {

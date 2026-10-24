@@ -15,7 +15,7 @@ a timer on one strip, blink what needs attention, and animate in steps, never wi
 **Palette, 16 colours** (`web/src/screen/sprites.ts`, mirrored as `--p-*` tokens in `web/src/game/theme.css`):
 black #0b0b14 · navy #141b33 · blue-dark #1c2b55 · blue #2a4ba3 · water-1 #1f6f8b · water-2 #36a3c9 · foam #9be7ff ·
 wall #e8d9b5 · roof #b5473a · wood #4a2f1f · yellow #ffd23f · orange #ff7b2e · red #ff3c5f · green #3fd6a0 ·
-grey #8a93a6 · white #f4f1ea. Bands: red = red, orange = orange, yellow = yellow, same meaning as Relief Mesh.
+grey #8a93a6 · white #f4f1ea. Bands: red = red, orange = orange, yellow = yellow (urgency bands).
 
 **Type.** Press Start 2P (OFL) for headings, numbers, labels and buttons at 10–44 px; Pixelify Sans (OFL) for body at
 15–22 px; both bundled from `@fontsource`. No pixel Malayalam exists, so `html[lang=ml]` falls back to Noto Sans
@@ -82,7 +82,7 @@ on dark paper, not a satellite view. Everything that matters glows; everything e
 | `--shadow` | `0 20px 60px rgba(0,0,0,.45)` | floating panels |
 | `--radius` | `20px` (screen) / `16px` (phone) | |
 
-Band colours stay semantically identical to Relief Mesh: red = alarm, orange = ember, yellow = lamp.
+Band colours: red = alarm, orange = ember, yellow = lamp.
 Contrast: every text token on `--night-0..2` is ≥ 7:1; `--ink-3` on `--night-1` is 4.6:1 and only used for hints.
 
 ## 3. Type

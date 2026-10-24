@@ -1,6 +1,6 @@
 // Top bar (title, round, countdown, stars) and bottom bar (score, people, join QR, host controls).
-import { thuruthu, type GameView } from '@relief-mesh/shared';
-import type { JoinInfo } from '../dashboard/api.js';
+import { thuruthu, type GameView } from '@pralayam/shared';
+import type { JoinInfo } from '@pralayam/shared';
 import { clockText, totals } from './format.js';
 import { Host } from './Host.js';
 import { SPRITES, spriteRects } from './sprites.js';

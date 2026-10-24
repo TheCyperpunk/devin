@@ -1,6 +1,6 @@
 // Pixel sprites for the map (GAME-VISUAL "pixel edition"): bitmaps as strings, one char per pixel, '.' = empty.
 // Each sprite is drawn as SVG rects on the map's 4-unit pixel grid, anchored at its bottom centre.
-import type { BoatColor } from '@relief-mesh/shared';
+import type { BoatColor } from '@pralayam/shared';
 
 export const PX = 4;
 

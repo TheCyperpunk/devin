@@ -1,5 +1,5 @@
 {
-  "name": "@relief-mesh/server",
+  "name": "@pralayam/server",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,8 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@relief-mesh/shared": "*",
-    "@supabase/supabase-js": "^2.47.0",
+    "@pralayam/shared": "*",
     "better-sqlite3": "^11.7.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

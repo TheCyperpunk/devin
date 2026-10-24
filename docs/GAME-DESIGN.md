@@ -1,6 +1,6 @@
 # Pralayam — game design
 
-Co-operative flood-night rescue for 1–8 phones and one big screen, on the Relief Mesh hub, with no Internet.
+Co-operative flood-night rescue for 1–8 phones and one big screen, on a local hub laptop, with no Internet.
 This is the rules document. Data shapes are in `GAME-CONTRACT.md`, the look in `GAME-VISUAL.md`, the build order
 in `GAME-PLAN.md`. Everything here is deterministic so it can be unit-tested and replayed.
 
@@ -30,16 +30,16 @@ the old first.
 - The temple and school never flood (height 3 but a special `safe: true` flag). They can hold many people and are
   the natural staging posts.
 
-### 2.3 Calls (same shape as a Relief Mesh report)
+### 2.3 Calls
 `needs[] ⊆ {water, food, medical, rescue, shelter}`, `peopleCount 1–8`, `hasChildren`, `hasElderlyOrSick`,
 `urgent`, plus game fields: `nodeId`, `appearedRound`, `remaining` (people still there), `kitsNeeded`
 (derived: water → water kit, food → food kit, medical → medical kit), `status: open | served | lost`.
 
-Urgency = `baseScore(call) + waitBonus(rounds waited) + waterBonus` where `baseScore` and `waitBonus` are the
-Relief Mesh functions with one round = ten minutes of the night (+2 per round, capped at 20), and `waterBonus` = 25
+Urgency = `baseScore(call) + waitBonus(rounds waited) + waterBonus` where `baseScore` and `waitBonus` are the shared urgency
+functions (`shared/src/urgency.ts`) with one round = ten minutes of the night (+2 per round, capped at 20), and `waterBonus` = 25
 once the house is flooded. Priority seats: a call with children has `round(people / 3)` of them (at least 1), one
 with elderly or sick `round(people / 4)` (at least 1); they board first.
-Bands are the Relief Mesh bands (red ≥ 80, orange ≥ 50, yellow). The big screen colours calls by band.
+Bands: red ≥ 80, orange ≥ 50, else yellow. The big screen colours calls by band.
 
 ### 2.4 Boats (one per phone, plus bots)
 - `capacity 4` people, kits `{water: 1, food: 1, medical: 1}` (refilled to 1 each at the camp).

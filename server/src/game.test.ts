@@ -4,7 +4,7 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
-import type { GameView, Order, ServerMessage } from '@relief-mesh/shared';
+import type { GameView, Order, ServerMessage } from '@pralayam/shared';
 import { HubDb } from './db.js';
 import { EARLY_RESOLVE_MIN_MS, type Timers } from './game.js';
 import { createHub } from './hub.js';
@@ -100,7 +100,7 @@ async function pair(name: string, deviceId: string) {
   return r.json.deviceToken as string;
 }
 async function login() {
-  const r = await call('POST', '/api/dashboard/login', { body: { passcode: PASS } });
+  const r = await call('POST', '/api/host/login', { body: { passcode: PASS } });
   return r.json.sessionToken as string;
 }
 const ord = (seq: number, order: Order, id = randomUUID()) => ({ id, seq, order });

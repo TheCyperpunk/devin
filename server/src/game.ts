@@ -21,7 +21,7 @@ import {
   type GameView,
   type OrderResult,
   type Scenario,
-} from '@relief-mesh/shared';
+} from '@pralayam/shared';
 import { randomUUID } from 'node:crypto';
 import type { HubDb } from './db.js';
 import type { Events } from './ws.js';

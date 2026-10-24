@@ -1,10 +1,10 @@
-// Builds the hub: Express app (API + static web/dist) and the WebSocket hub, wired to one HubDb.
+// Builds the hub: Express app (API + static web/dist), the WebSocket hub and the game service, on one HubDb.
 import express, { type ErrorRequestHandler } from 'express';
 import type http from 'node:http';
 import type https from 'node:https';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { LIMITS, TIMING, type CloudStatus } from '@relief-mesh/shared';
+import { LIMITS, TIMING } from '@pralayam/shared';
 import { fail, keyByTokenOrIp, rateLimit } from './auth.js';
 import type { HubDb } from './db.js';
 import { GameService, type Timers } from './game.js';
@@ -22,7 +22,6 @@ export interface HubOptions {
   rateLimitPerMin?: number;
   authRateLimitPerMin?: number;
   wsAuthDeadlineMs?: number;
-  cloudStatus?: () => CloudStatus;
   /** Game round timers (tests inject fake ones). */
   gameTimers?: Timers;
 }
@@ -55,7 +54,6 @@ export function createHub(opts: HubOptions) {
       coordinatorPasscode: opts.coordinatorPasscode,
       baseUrl: opts.baseUrl,
       now,
-      cloudStatus: opts.cloudStatus ?? (() => ({ state: 'not_configured' })),
       authRateLimitPerMin: opts.authRateLimitPerMin ?? 10,
     }),
   );
@@ -75,7 +73,6 @@ export function createHub(opts: HubOptions) {
         },
       }),
     );
-    app.get('/dashboard', (_req, res) => res.sendFile(path.join(dist, 'dashboard.html')));
     app.get('/screen', (_req, res) => res.sendFile(path.join(dist, 'screen.html')));
   } else if (opts.webDist) {
     app.get('*', (_req, res) => {
@@ -83,7 +80,7 @@ export function createHub(opts: HubOptions) {
     });
   }
 
-  // Last: map body-parser failures to the contract's error format. Never log request bodies (D11).
+  // Last: map body-parser failures to the contract's error format. Never log request bodies.
   const onError: ErrorRequestHandler = (err: { type?: string }, _req, res, _next) => {
     if (err.type === 'entity.too.large') return fail(res, 413, 'too_large', 'Request body is too large');
     if (err.type === 'entity.parse.failed') return fail(res, 400, 'invalid_body', 'Body is not valid JSON');

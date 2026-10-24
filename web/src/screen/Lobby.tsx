@@ -1,7 +1,7 @@
 // Lobby overlay: the QR to join, crews docking as phones join, round length and bots, Start. Also the "no game yet" card.
 import { useState } from 'react';
-import { thuruthu, type GameView } from '@relief-mesh/shared';
-import type { JoinInfo } from '../dashboard/api.js';
+import { thuruthu, type GameView } from '@pralayam/shared';
+import type { JoinInfo } from '@pralayam/shared';
 import { COLOR_HEX } from './format.js';
 import type { ScreenStore } from './store.js';
 
@@ -80,7 +80,7 @@ export function Lobby({ view, join, store, busy }: { view: GameView | null; join
           </div>
         </div>
       </div>
-      <div className="hint foot">Works with no Internet · the same hub runs the Relief Mesh coordination tool</div>
+      <div className="hint foot">Works with no Internet · a local hub on this laptop runs the whole night</div>
     </div>
   );
 }

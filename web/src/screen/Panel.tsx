@@ -1,6 +1,6 @@
 // Right column of the big screen: calls by urgency (with pixel icons for people, child, elderly, kits), crews,
 // and the water level as a segmented bar.
-import { GAME, thuruthu, type GameView } from '@relief-mesh/shared';
+import { GAME, thuruthu, type GameView } from '@pralayam/shared';
 import { KIT_WORD_SPRITE, nodeName } from './format.js';
 import { COLOR_PX, SPRITES, spriteRects, type SpriteName } from './sprites.js';
 

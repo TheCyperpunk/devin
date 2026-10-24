@@ -1,4 +1,4 @@
-// Vite config: three entry pages (volunteer "/", dashboard "/dashboard.html", game big screen "/screen.html") and the PWA service worker.
+// Vite config: two entry pages (phone "/", big screen "/screen.html") and the phone's PWA service worker.
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -11,17 +11,16 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Relief Mesh',
-        short_name: 'Relief',
-        description: 'Report relief needs. Works without Internet.',
+        name: 'Pralayam',
+        short_name: 'Pralayam',
+        description: 'The flood night. Crew a boat. Works without Internet.',
         lang: 'en',
         id: '/',
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#0b6e4f',
-        // Chrome only offers "Install" with PNG icons at 192 and 512 px.
+        background_color: '#0b0b14',
+        theme_color: '#0b0b14',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -29,14 +28,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache the volunteer app shell only. /api/* must never be cached or served from the SW.
+        // Precache the phone app shell only. /api/* must never be cached or served from the SW.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-        // The dashboard runs on the hub laptop and must always come fresh from the hub: if the laptop's browser
-        // ever opened the volunteer page, this worker would otherwise keep serving an old dashboard from cache.
-        // Same for the game's big screen (it runs on the laptop too). Its fonts stay cached: the phone game reuses them.
-        globIgnores: ['**/dashboard.html', '**/assets/dashboard-*', '**/assets/MapView-*', '**/screen.html', '**/assets/screen-*'],
+        // The big screen runs on the hub laptop and must always come fresh from the hub.
+        globIgnores: ['**/screen.html', '**/assets/screen-*'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/dashboard/, /^\/screen/, /^\/ws/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/screen/, /^\/ws/],
         runtimeCaching: [],
         cleanupOutdatedCaches: true,
       },
@@ -53,8 +50,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        volunteer: resolve(__dirname, 'index.html'),
-        dashboard: resolve(__dirname, 'dashboard.html'),
+        play: resolve(__dirname, 'index.html'),
         screen: resolve(__dirname, 'screen.html'),
       },
     },

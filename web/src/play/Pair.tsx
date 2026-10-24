@@ -1,7 +1,7 @@
 // First-run screen: name + join code (prefilled from the QR link's ?join=) -> POST /api/pair -> device token.
 import { useEffect, useState, type FormEvent } from 'react';
-import { LIMITS } from '@relief-mesh/shared';
-import { ApiFail, pair, type PairResponse } from '../lib/api.js';
+import { LIMITS, type PairResponse } from '@pralayam/shared';
+import { ApiFail, api } from '../lib/api.js';
 import type { Settings } from '../lib/db.js';
 import { useLang } from './lang.js';
 
@@ -31,8 +31,7 @@ export function Pair({ settings, onPaired }: { settings: Settings; onPaired: (r:
     setError(null);
     setBusy(true);
     try {
-      const r = await pair(cleanCode, settings.deviceId!, cleanName);
-      await onPaired(r);
+      await onPaired(await api.pair(cleanCode, settings.deviceId!, cleanName));
     } catch (err) {
       const c = err instanceof ApiFail ? err.code : 'internal';
       setError(c === 'bad_join_code' ? t('errBadCode') : c === 'network' ? t('errNoHub') : c === 'rate_limited' ? t('errTooMany') : t('errGeneric'));
@@ -41,38 +40,23 @@ export function Pair({ settings, onPaired }: { settings: Settings; onPaired: (r:
   }
 
   return (
-    <form className="card pad" onSubmit={submit} noValidate>
-      <h1>{t('pairTitle')}</h1>
+    <form className="panel pad stack" onSubmit={submit} noValidate>
+      <h1 className="display h2">{t('pairTitle')}</h1>
       <p className="muted">{t('pairHelp')}</p>
       <label className="field">
         <span>{t('yourName')}</span>
-        <input
-          name="name"
-          autoComplete="name"
-          maxLength={LIMITS.reporterNameMax}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <input name="name" autoComplete="name" maxLength={LIMITS.nameMax} value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <label className="field">
         <span>{t('joinCode')}</span>
-        <input
-          name="joinCode"
-          className="code"
-          autoCapitalize="characters"
-          autoComplete="off"
-          spellCheck={false}
-          maxLength={16}
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-        />
+        <input name="joinCode" className="code" autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={16} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
       </label>
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
-      <button className="btn primary" type="submit" disabled={busy}>
+      <button className="btn lamp big" type="submit" disabled={busy}>
         {busy ? t('joining') : t('join')}
       </button>
     </form>

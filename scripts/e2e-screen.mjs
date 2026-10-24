@@ -104,7 +104,7 @@ try {
   const score = await page.$eval('.endPanel .num.huge', (el) => el.innerText);
   ok(Number(score) === 170, `end: three bots score 170 (${score})`);
   ok((await text(page)).toLowerCase().includes('people saved'), 'end: stats with the 2018 lines');
-  ok(await page.$('a[href="/dashboard.html"]') !== null, 'end: link to the real tool');
+  ok((await text(page)).includes('exactly once'), 'end: closing line');
   await page.screenshot({ path: path.join(shots, '5-first-light.png') });
 
   // ---- play again, and layout at a smaller projector

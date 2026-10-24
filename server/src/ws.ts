@@ -1,23 +1,20 @@
-// WebSocket hub at /ws (CONTRACT section 6): token handshake, then per-role event delivery.
+// WebSocket hub at /ws: token handshake, then game pushes (state to everyone, "you" to one crew's phone).
 import type http from 'node:http';
 import type https from 'node:https';
 import { WebSocket, WebSocketServer } from 'ws';
-import { TIMING, type CloudStatus, type GameRoundPayload, type GameView, type Report, type ServerMessage } from '@relief-mesh/shared';
+import { TIMING, type GameRoundPayload, type GameView, type ServerMessage } from '@pralayam/shared';
 import { resolveToken, type Auth } from './auth.js';
 import type { HubDb } from './db.js';
 
 /** What the REST layer needs to tell connected clients. Tests can pass a no-op. */
 export interface Events {
-  reportUpserted(report: Report): void;
   deviceRevoked(deviceId: string): void;
-  cloudStatus(status: CloudStatus): void;
-  /** Game (GAME-CONTRACT section 6): the view goes to everyone, `you` only to that crew's phone. */
   gameState(view: GameView): void;
   gameRound(payload: GameRoundPayload): void;
   gameYou(deviceId: string, you: NonNullable<GameView['you']>): void;
 }
 
-export const noEvents: Events = { reportUpserted() {}, deviceRevoked() {}, cloudStatus() {}, gameState() {}, gameRound() {}, gameYou() {} };
+export const noEvents: Events = { deviceRevoked() {}, gameState() {}, gameRound() {}, gameYou() {} };
 
 interface Client {
   ws: WebSocket;
@@ -103,30 +100,10 @@ export class WsHub implements Events {
 
   // ---- Events ----
 
-  /** Coordinators get every report; a phone only gets reports it owns (D4). */
-  reportUpserted(report: Report): void {
-    const stats = this.db.stats();
-    for (const c of this.clients) {
-      if (!c.auth) continue;
-      if (c.auth.role === 'coordinator') {
-        send(c.ws, { type: 'report:upserted', payload: { report } });
-        send(c.ws, { type: 'stats', payload: stats });
-      } else if (c.auth.deviceId === report.deviceId) {
-        send(c.ws, { type: 'report:upserted', payload: { report } });
-      }
-    }
-  }
-
   /** Re-pairing replaces a device token, so sockets opened with the old one are closed. */
   deviceRevoked(deviceId: string): void {
     for (const c of this.clients) {
       if (c.auth?.role === 'device' && c.auth.deviceId === deviceId) c.ws.close(CLOSE_UNAUTHORIZED, 'token replaced');
-    }
-  }
-
-  cloudStatus(status: CloudStatus): void {
-    for (const c of this.clients) {
-      if (c.auth?.role === 'coordinator') send(c.ws, { type: 'cloud:status', payload: status });
     }
   }
 

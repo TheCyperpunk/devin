@@ -3,12 +3,10 @@ import http from 'node:http';
 import https from 'node:https';
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { CloudSync } from './cloudSync.js';
 import { assertCertsExist, assertPasscode, certPaths, config } from './config.js';
 import { HubDb } from './db.js';
 import { createHub } from './hub.js';
 import { createSetupApp } from './setupServer.js';
-import { supabaseClient } from './supabase.js';
 
 assertCertsExist();
 assertPasscode();
@@ -17,37 +15,24 @@ mkdirSync(config.dataDir, { recursive: true });
 const db = new HubDb(path.join(config.dataDir, 'hub.db'));
 
 const baseUrl = `https://${config.hubIp}:${config.httpsPort}`;
-
-// Cloud backup is optional: without both settings the dashboard shows "not configured" and nothing leaves the hub.
-const cloudConfigured = Boolean(config.supabaseUrl && config.supabaseSecretKey);
-let cloud: CloudSync;
-const hub = createHub({
-  db,
-  coordinatorPasscode: config.coordinatorPasscode,
-  baseUrl,
-  webDist: config.webDist,
-  cloudStatus: () => cloud.current(),
-});
-cloud = new CloudSync(db, cloudConfigured ? supabaseClient(config.supabaseUrl, config.supabaseSecretKey) : null, hub.ws);
+const hub = createHub({ db, coordinatorPasscode: config.coordinatorPasscode, baseUrl, webDist: config.webDist });
 
 const tls = { cert: readFileSync(certPaths.cert), key: readFileSync(certPaths.key) };
 const hubServer = https.createServer(tls, hub.app);
 hub.attach(hubServer);
 hubServer.listen(config.httpsPort, '0.0.0.0', () => {
-  console.log(`[hub]   ${baseUrl}  (also https://localhost:${config.httpsPort})   hubId ${db.hubId}`);
-  console.log(`[hub]   join code ${db.joinCode}   (phones join via ${baseUrl}/?join=${db.joinCode})`);
-  console.log(cloudConfigured ? `[cloud] backup to ${new URL(config.supabaseUrl).host} every 10 s` : '[cloud] not configured (SUPABASE_URL / SUPABASE_SECRET_KEY unset)');
-  cloud.start();
+  console.log(`[hub]    ${baseUrl}  (also https://localhost:${config.httpsPort})   hubId ${db.hubId}`);
+  console.log(`[hub]    join code ${db.joinCode}   (phones join via ${baseUrl}/?join=${db.joinCode})`);
+  console.log(`[screen] ${baseUrl}/screen.html   (host passcode from .env)`);
 });
 
 const setupServer = http.createServer(createSetupApp());
 setupServer.listen(config.setupPort, '0.0.0.0', () => {
-  console.log(`[setup] http://${config.hubIp}:${config.setupPort}`);
+  console.log(`[setup]  http://${config.hubIp}:${config.setupPort}`);
 });
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, () => {
-    cloud.stop();
     hub.game.stop();
     hubServer.close();
     setupServer.close();

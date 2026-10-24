@@ -1,5 +1,5 @@
 // Calls to the hub. Every failure becomes an ApiFail with the contract's error code, or 'network' when unreachable.
-import type { ApiErrorBody, BatchItemResult, ErrorCode, PhoneReportInput, Report } from '@relief-mesh/shared';
+import type { ApiErrorBody, ErrorCode, PairResponse } from '@pralayam/shared';
 
 export class ApiFail extends Error {
   constructor(
@@ -13,31 +13,13 @@ export class ApiFail extends Error {
   }
 }
 
-export interface PairResponse {
-  deviceToken: string;
-  deviceId: string;
-  reporterName: string;
-  hubId: string;
-}
-
 export interface HealthResponse {
   ok: true;
   time: number;
   hubId: string;
 }
 
-export interface ReportsPage {
-  reports: Report[];
-  maxRevision: number;
-  hasMore: boolean;
-  serverTime: number;
-}
-
-export async function request<T>(
-  method: string,
-  path: string,
-  opts: { token?: string; body?: unknown; timeoutMs?: number } = {},
-): Promise<T> {
+export async function request<T>(method: string, path: string, opts: { token?: string; body?: unknown; timeoutMs?: number } = {}): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 10_000);
   let res: Response;
@@ -74,17 +56,7 @@ export async function request<T>(
 
 export const api = {
   health: (timeoutMs = 2000) => request<HealthResponse>('GET', '/api/health', { timeoutMs }),
-
   pair: (joinCode: string, deviceId: string, reporterName: string) =>
     request<PairResponse>('POST', '/api/pair', { body: { joinCode, deviceId, reporterName }, timeoutMs: 8000 }),
-
-  sendBatch: (token: string, reports: PhoneReportInput[]) =>
-    request<{ results: BatchItemResult[] }>('POST', '/api/reports/batch', { token, body: { reports }, timeoutMs: 20_000 }),
-
-  myReports: (token: string, after: number) => request<ReportsPage>('GET', `/api/my-reports?after=${after}`, { token }),
 };
-
 export type Api = typeof api;
-
-/** Kept for the pairing screen, which predates `api`. */
-export const pair = api.pair;

@@ -1,6 +1,6 @@
 // Names, colours and event wording for the big screen. The scenario comes from the shared package so the screen
 // never asks the hub for node positions.
-import { thuruthu, type BoatColor, type GameEvent, type GameView, type Kit, type NeedType, type ScenarioNode } from '@relief-mesh/shared';
+import { thuruthu, type BoatColor, type GameEvent, type GameView, type Kit, type NeedType, type ScenarioNode } from '@pralayam/shared';
 
 export const NODES: Record<string, ScenarioNode> = Object.fromEntries(thuruthu.nodes.map((n) => [n.id, n]));
 export const nodeName = (id: string | undefined) => (id && NODES[id]?.name) || '?';
