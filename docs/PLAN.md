@@ -55,12 +55,15 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Sort rule: not-done before done; then displayed score high to low; then older `reportedAt` first; then lower `revision`. Done reports use the same order among themselves.
 - **Gate:** unit tests cover: medical above food-only; rescue; group size cap at 30; wait bonus capped at 20; food/water +10 only when no medical/rescue/urgent; done sorted last; ties broken by older `reportedAt`.
 
-### Phase 4 — Volunteer PWA
+### Phase 4 — Volunteer PWA ✅ (gate passed in a real browser; real-phone check pending)
 - `vite-plugin-pwa`: manifest, icons, precache the app shell; never cache `/api/*`.
 - Pairing screen (from QR `?join=` or manual code), name, language toggle (en/ml from `shared/i18n.ts`).
 - Form: need buttons, people counter, three toggles, note, GPS with 5 s timeout, Submit.
 - IndexedDB per CONTRACT §8. `navigator.storage.persist()`. "Saved on phone" shown immediately.
 - **Gate:** load once → airplane mode → app reopens → submit → report shows "Saved on phone" after closing and reopening.
+- Built: `shared/src/i18n.ts` (all strings, en + ml, parity-tested), `web/src/lib/{db,report,api,hooks,timeago}.ts`, `web/src/volunteer/{App,Pair,ReportForm,MyReports,lang}.tsx`. Reports are saved in IndexedDB with a matching outbox entry in ONE transaction; nothing is sent to the hub yet (Phase 5).
+- Verified by `npm run e2e` (drives Edge/Chrome against the running hub): pairing from the QR link (code is removed from the address bar), wrong code error, service worker control, offline reload stays paired, offline submit, close + reopen keeps the report, GPS saved, no hub-owned fields stored, Malayalam, and no sideways scrolling at 320/360/390 px in both languages. Screenshots showed (and the check now prevents) a Malayalam layout overflow.
+- Known limitations: the 12 agreed Malayalam labels are as written in this plan, the other ~35 strings are first drafts needing a native-speaker check; `storage.persist()` is denied in the headless test browser (the "browser may delete reports" warning shows), so confirm it is granted on an installed phone app; there is no way to re-pair or change name yet (Phase 5/8); a report that fails local validation is refused on the form, not queued.
 
 ### Phase 5 — Outbox sync and status
 - `flushOutbox()`: health → batch ≤ 50 → handle per-item results (CONTRACT §4).
