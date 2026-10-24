@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { GAME, thuruthu, type GameEvent, type GameView, type ScenarioNode } from '@pralayam/shared';
 import { NODES, initials } from './format.js';
-import { COLOR_PX, P, PX, SPRITES, snap, spriteRects, type SpriteName } from './sprites.js';
+import { COLOR_PX, P, PX, SPRITES, snap, spriteRects, type SpriteName } from '../game/sprites.js';
 
 const STEP = 16;
 const HALF = 34;

@@ -3,7 +3,7 @@ import { thuruthu, type GameView } from '@pralayam/shared';
 import type { JoinInfo } from '@pralayam/shared';
 import { clockText, totals } from './format.js';
 import { Host } from './Host.js';
-import { SPRITES, spriteRects } from './sprites.js';
+import { SPRITES, spriteRects } from '../game/sprites.js';
 import type { ScreenStore } from './store.js';
 import { useTween } from './useStore.js';
 

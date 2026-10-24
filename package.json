@@ -19,7 +19,8 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "sim": "tsx scripts/sim.ts",
     "e2e:screen": "node scripts/e2e-screen.mjs",
-    "e2e": "node scripts/e2e-screen.mjs"
+    "e2e": "node scripts/e2e-screen.mjs",
+    "e2e:play": "node scripts/e2e-play.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

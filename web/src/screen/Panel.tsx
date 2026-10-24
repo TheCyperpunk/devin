@@ -2,7 +2,7 @@
 // and the water level as a segmented bar.
 import { GAME, thuruthu, type GameView } from '@pralayam/shared';
 import { KIT_WORD_SPRITE, nodeName } from './format.js';
-import { COLOR_PX, SPRITES, spriteRects, type SpriteName } from './sprites.js';
+import { COLOR_PX, SPRITES, spriteRects, type SpriteName } from '../game/sprites.js';
 
 export function Icon({ name, size = 16, title }: { name: SpriteName; size?: number; title?: string }) {
   const s = SPRITES[name];

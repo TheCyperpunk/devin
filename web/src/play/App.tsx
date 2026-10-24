@@ -1,14 +1,15 @@
-// Phone shell: pair with the hub, pick a boat colour, join the night, then follow it (G4 adds the order picker).
+// Phone shell: pair with the hub, pick a boat colour, join, then play the night from this phone through the outbox.
 import { useCallback, useEffect, useState } from 'react';
-import { BOAT_COLORS, isLang, type BoatColor, type GameView, type Lang, type PairResponse } from '@pralayam/shared';
-import { ApiFail, request } from '../lib/api.js';
-import { getSettings, setSettings, type Settings } from '../lib/db.js';
+import { BOAT_COLORS, isLang, type BoatColor, type Lang, type PairResponse } from '@pralayam/shared';
+import { COLOR_PX } from '../game/sprites.js';
+import { clearOutbox, getSettings, setSettings, type Settings } from '../lib/db.js';
+import { EndScreen } from './End.js';
 import { LangProvider, LangToggle, useLang } from './lang.js';
+import { OrderScreen } from './Order.js';
+import { myBoat } from './orders.js';
 import { Pair } from './Pair.js';
+import { useGame, useGameTriggers } from './useGame.js';
 
-const COLOR_PX: Record<BoatColor, string> = {
-  moss: '#3fd6a0', ember: '#ff7b2e', lamp: '#ffd23f', water: '#36a3c9', rose: '#ff5c8a', lilac: '#b388ff', sand: '#e8c39e', sky: '#7cc7ff',
-};
 const defaultLang = (): Lang => (navigator.language?.toLowerCase().startsWith('ml') ? 'ml' : 'en');
 
 export function App() {
@@ -30,132 +31,115 @@ export function App() {
     await setSettings(patch);
     setLocal((s) => ({ ...s, ...patch }));
   }, []);
+  const reload = useCallback(async () => setLocal(await getSettings()), []);
   if (!settings) return <main className="splash display">…</main>;
   return (
     <LangProvider lang={settings.lang ?? 'en'} setLang={(lang) => void update({ lang })}>
-      <Shell settings={settings} update={update} />
+      <Shell settings={settings} update={update} reload={reload} />
     </LangProvider>
   );
 }
 
-type Follow = { kind: 'loading' } | { kind: 'noGame' } | { kind: 'offline' } | { kind: 'view'; view: GameView };
-
-function Shell({ settings, update }: { settings: Settings; update: (p: Settings) => Promise<void> }) {
+function Shell({ settings, update, reload }: { settings: Settings; update: (p: Settings) => Promise<void>; reload: () => Promise<void> }) {
   const { t } = useLang();
-  const [notice, setNotice] = useState<string | null>(null);
-  const [follow, setFollow] = useState<Follow>({ kind: 'loading' });
-  const [joining, setJoining] = useState(false);
-  const paired = Boolean(settings.deviceToken);
+  const { state, sync } = useGame();
+  const [joining, setJoining] = useState<string | null>(null);
+  const paired = Boolean(settings.deviceToken) && !state.needsPairing;
+  useGameTriggers(paired);
 
   async function onPaired(r: PairResponse) {
     const old = await getSettings();
-    await update({ deviceToken: r.deviceToken, hubId: r.hubId, reporterName: r.reporterName, ...(old.hubId && old.hubId !== r.hubId ? { color: undefined } : {}) });
-    setNotice(null);
+    if (old.hubId && old.hubId !== r.hubId) {
+      await clearOutbox();
+      await update({ gameId: undefined, nextSeq: undefined, lastView: undefined, lastViewAt: undefined, color: undefined });
+    }
+    await update({ deviceToken: r.deviceToken, hubId: r.hubId, reporterName: r.reporterName });
+    await reload();
   }
-
-  // Follow the game: poll the state (the socket comes with G4) and drop the token when the hub no longer knows it.
-  useEffect(() => {
-    if (!paired) return;
-    let live = true;
-    let rev = 0;
-    const tick = async () => {
-      try {
-        const res = await request<{ view: GameView } | { unchanged: true }>('GET', `/api/game/state?after=${rev}`, { token: settings.deviceToken });
-        if (!live) return;
-        if ('view' in res) {
-          rev = res.view.revision;
-          setFollow({ kind: 'view', view: res.view });
-        } else setFollow((f) => (f.kind === 'view' ? f : { kind: 'loading' }));
-      } catch (err) {
-        if (!live) return;
-        const code = err instanceof ApiFail ? err.code : 'network';
-        if (code === 'no_game') setFollow({ kind: 'noGame' });
-        else if (code === 'unauthorized') {
-          await update({ deviceToken: undefined });
-          setNotice(t('pairAgainToken'));
-        } else if (code === 'network') setFollow({ kind: 'offline' });
-      }
-    };
-    void tick();
-    const id = window.setInterval(() => void tick(), 3000);
-    return () => {
-      live = false;
-      window.clearInterval(id);
-    };
-  }, [paired, settings.deviceToken, update, t]);
 
   async function join(color: BoatColor) {
     if (joining) return;
-    setJoining(true);
-    try {
-      const { view } = await request<{ view: GameView }>('POST', '/api/game/join', { token: settings.deviceToken, body: { color } });
-      await update({ color });
-      setFollow({ kind: 'view', view });
-    } catch (err) {
-      const code = err instanceof ApiFail ? err.code : 'network';
-      setNotice(code === 'no_game' ? t('noGame') : code === 'game_over' ? t('nightOver') : code === 'network' ? t('errNoHub') : t('errGeneric'));
-    } finally {
-      setJoining(false);
-    }
+    setJoining(color);
+    const err = await sync.join(color);
+    setJoining(null);
+    if (err) setNotice(err);
   }
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const view = follow.kind === 'view' ? follow.view : null;
-  const mine = view?.boats.find((b) => b.id === settings.deviceId) ?? null;
+  const view = state.view;
+  const boat = myBoat(view, settings.deviceId);
+  const statusText = state.hub === 'unknown' ? '…' : state.hub === 'online' ? t('hubOnline') : t('hubOffline');
 
   return (
     <>
       <header className="top">
         <span className="display logo">{t('appName')}</span>
+        {paired && (
+          <span className="status" aria-live="polite">
+            <i className={'dot ' + (state.hub === 'online' ? 'ok' : state.hub === 'offline' ? 'bad' : '')} />
+            {statusText}
+          </span>
+        )}
         <LangToggle />
       </header>
       <main className="stack">
-        {notice && (
-          <p className="notice" role="alert">
-            {notice}
-          </p>
-        )}
         {!paired ? (
           <>
-            <p className="muted center">{t('tagline')}</p>
+            {state.needsPairing ? (
+              <p className="notice" role="alert">
+                {state.needsPairing === 'reset' ? t('pairAgainReset') : t('pairAgainToken')}
+              </p>
+            ) : (
+              <p className="muted center">{t('tagline')}</p>
+            )}
             <Pair settings={settings} onPaired={onPaired} />
           </>
-        ) : follow.kind === 'noGame' ? (
-          <p className="panel pad muted">{t('noGame')}</p>
-        ) : follow.kind === 'offline' ? (
-          <p className="panel pad bad">{t('hubOffline')}</p>
+        ) : state.noGame && !view ? (
+          <p className="panel pad muted" data-screen="no-game">
+            {t('noGame')}
+          </p>
         ) : !view ? (
-          <p className="muted center">{t('loading')}</p>
+          <p className="muted center">{state.hub === 'offline' ? t('hubOffline') : t('loading')}</p>
         ) : view.phase === 'ended' ? (
-          <p className="panel pad">{t('nightOver')}</p>
-        ) : !mine ? (
-          <section className="panel pad stack">
+          <EndScreen view={view} boat={boat} />
+        ) : !boat ? (
+          <section className="panel pad stack" data-screen="pick">
             <h1 className="display h2">{t('pickColour')}</h1>
+            {notice && (
+              <p className="notice" role="alert">
+                {notice === 'no_game' ? t('noGame') : notice === 'game_over' ? t('nightOver') : notice === 'network' ? t('errNoHub') : t('errGeneric')}
+              </p>
+            )}
             <div className="swatches">
               {BOAT_COLORS.map((c) => {
                 const taken = view.boats.some((b) => b.color === c);
                 return (
-                  <button key={c} type="button" className={'swatch' + (taken ? ' taken' : '')} disabled={taken || joining} style={{ background: COLOR_PX[c] }} onClick={() => void join(c)} aria-label={c} />
+                  <button key={c} type="button" className={'swatch' + (taken ? ' taken' : '')} disabled={taken || joining !== null} style={{ background: COLOR_PX[c] }} onClick={() => void join(c)} aria-label={c} data-color={c} />
                 );
               })}
             </div>
             <p className="hint">{t('crewBoat')}</p>
           </section>
-        ) : (
-          <section className="panel pad stack">
+        ) : view.phase === 'lobby' ? (
+          <section className="panel pad stack" data-screen="lobby">
             <div className="boatRow">
-              <span className="hull" style={{ background: COLOR_PX[mine.color] }} />
-              <span className="display">{mine.name}</span>
+              <span className="hull" style={{ background: COLOR_PX[boat.color] }} />
+              <span className="display">{boat.name}</span>
             </div>
-            <p>{t('aboard', { name: mine.name })}</p>
-            {view.phase === 'lobby' ? (
-              <p className="muted blinkText">{t('waitingHost')}</p>
-            ) : (
-              <>
-                <p className="display h2">{t('roundN', { n: view.round })}</p>
-                <p className="muted">{t('ordersSoon')}</p>
-              </>
-            )}
+            <p>{t('aboard', { name: boat.name })}</p>
+            <p className="muted blinkText">{t('waitingHost')}</p>
+            <ul className="crews">
+              {view.boats.map((b) => (
+                <li key={b.id}>
+                  <span className="hull small" style={{ background: COLOR_PX[b.color] }} />
+                  {b.name}
+                  {b.bot ? ' · bot' : ''}
+                </li>
+              ))}
+            </ul>
           </section>
+        ) : (
+          <OrderScreen view={view} boat={boat} state={state} sync={sync} />
         )}
       </main>
     </>

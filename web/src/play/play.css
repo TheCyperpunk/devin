@@ -26,3 +26,50 @@ p { margin: 0; line-height: 1.5; }
 .swatch:active { transform: translate(2px, 2px); box-shadow: inset 0 0 0 var(--px) var(--p-black), 2px 2px 0 0 var(--p-black); }
 .boatRow { display: flex; align-items: center; gap: 14px; }
 .hull { width: 48px; height: 18px; flex: none; box-shadow: inset 0 0 0 3px var(--p-black); }
+
+/* status + order screen */
+.status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); margin-left: auto; margin-right: 10px; }
+.dot { width: 10px; height: 10px; background: var(--p-grey); display: inline-block; }
+.dot.ok { background: var(--p-green); } .dot.bad { background: var(--p-red); }
+.banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--p-grey); color: var(--p-black); font-weight: 700; line-height: 1.3; }
+.banner .radio { font-family: var(--font-display); font-size: 16px; }
+.banner small { font-weight: 500; }
+.banner .btn { margin-left: auto; flex: none; }
+.strip { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--p-navy); border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 var(--px) var(--p-black); }
+.strip.sub { background: var(--p-black); border-color: var(--p-grey); font-size: 15px; color: var(--ink-2); }
+.strip .who { font-weight: 700; }
+.strip .round { margin-left: auto; font-size: 11px; }
+.strip .timer { font-size: 18px; color: var(--p-yellow); min-width: 64px; text-align: right; }
+.strip .timer.low { color: var(--p-red); }
+.seats { display: inline-flex; gap: 4px; }
+.seats i { width: 12px; height: 12px; background: var(--p-black); border: 2px solid var(--p-grey); display: inline-block; }
+.seats i.on { background: var(--p-white); border-color: var(--p-white); }
+.kits { margin-left: auto; display: inline-flex; gap: 10px; }
+.kits .out { opacity: .35; }
+.minimap { width: 100%; height: auto; display: block; border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 var(--px) var(--p-black); background: #1a2a4d; }
+.minimap.dim { opacity: .55; }
+.sect { font-family: var(--font-display); font-size: 10px; color: var(--ink-2); text-transform: uppercase; }
+.rows { display: grid; gap: 10px; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 14px; background: var(--p-blue-dark); border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 2px var(--p-black); text-align: left; font-size: 18px; font-weight: 700; width: 100%; box-sizing: border-box; }
+.row .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.row small { font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.row .ico { width: 36px; height: 36px; display: grid; place-items: center; background: var(--p-black); flex: none; font-size: 18px; }
+.row .badge { margin-left: auto; font-size: 14px; padding: 6px 8px; background: var(--p-black); border: 2px solid var(--p-grey); }
+.row.band-red .badge { border-color: var(--p-red); } .row.band-orange .badge { border-color: var(--p-orange); } .row.band-yellow .badge { border-color: var(--p-yellow); }
+.row.sel { background: var(--p-yellow); color: var(--p-black); }
+.row.sel small { color: #4a3a00; }
+.row.sel .ico, .row.sel .badge { background: var(--p-black); color: var(--p-white); }
+.standing { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 15px; color: var(--ink-2); }
+.seg { display: inline-flex; }
+.seg button { min-height: 48px; padding: 0 14px; border: 3px solid var(--p-grey); background: var(--p-black); color: var(--ink-2); font-family: var(--font-display); font-size: 9px; }
+.seg button.on { background: var(--p-white); color: var(--p-black); border-color: var(--p-white); }
+.btn.sent { background: var(--p-green); }
+.result { padding: 14px 16px; background: var(--p-black); border: var(--px) solid var(--p-green); display: grid; gap: 6px; }
+.result .pts { font-size: 28px; color: var(--p-green); }
+.result .pts.neg { color: var(--p-red); }
+.end .score { font-size: 40px; color: var(--p-yellow); text-shadow: 4px 4px 0 var(--p-black); }
+.end .stars { font-size: 28px; color: var(--p-yellow); letter-spacing: 6px; }
+.crews { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.crews li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 3px solid var(--p-grey); }
+.hull.small { width: 28px; height: 11px; }
+@media (max-width: 340px) { .strip .round { display: none; } }

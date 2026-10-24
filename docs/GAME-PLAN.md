@@ -53,7 +53,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Gate:** a bot-only game is watchable on the projector from 5 m; nothing in the network tab leaves the hub.
 - Done: `web/src/game/theme.css` (tokens shared with the phone), fonts bundled from `@fontsource` (Fraunces, Manrope, Noto Sans Malayalam; no `npm run fonts` needed), `web/src/screen/*` (store mirroring the dashboard store, SVG map with CSS-transitioned boat moves and a flood band that climbs with the water, side panel, bars with host controls and the join QR, lobby and first-light overlays, toasts, synthesized sound off by default). `npm run e2e:screen` plays a bot night in a real browser and asserts no external request. The host session is the dashboard's session key, so one passcode covers both pages. Restyled the same day as a 2D pixel game (GAME-VISUAL §0): sprites in `web/src/screen/sprites.ts`, Press Start 2P + Pixelify Sans, NES boxes, stepped motion, scanlines.
 
-## G4 — Phone (`/play`)
+## G4 — Phone (`/`) ✅ (17 unit tests + 30 browser checks with two phones and the screen playing a full night)
 - `web/src/lib/gameDb.ts` — `gameOutbox` store + `settings.game`; `gameSync.ts` — order flush with the same
   backoff/reconnect rules as reports; `useGame.ts`.
 - `web/src/play/` — `Lobby.tsx` (crew colour), `Order.tsx` (status strip, mini map, order rows, standing order,
@@ -63,6 +63,7 @@ phone no-signal, phone result; private until shared from its Share menu).
   order picker only offers legal orders (adjacent moves, rescue only where a call is).
 - e2e: three phone tabs + screen play a full game.
 - **Gate:** three real phones on the hotspot finish a game; every tap target ≥ 56 px; no overflow at 320 px.
+- Done: `web/src/lib/db.ts` (settings + `gameOutbox` store, IndexedDB `pralayam` v2), `web/src/lib/gameSync.ts` (health → catch-up → send due orders in batches → merge the view; replace / append seq semantics, backoff 1→30 s, reconnect makes all due, `late`/`invalid` notices, a new game id clears the outbox, hub reset or replaced token → pair again; last view restored from the phone on reload), `web/src/play/` (`orders.ts` legal orders + round estimate, `Order.tsx` strip/mini map/rows/standing order/Send + Queue-as-next, `MiniMap.tsx`, `End.tsx`, `useGame.ts`). `npm run e2e:play` pairs two phones from the QR link and plays to first light. The gate on real phones is still to run by hand.
 
 ## G5 — Works Anyway for real
 - Dead-zone UX: banner, estimated round, greyed last-known map, queued count; standing order prompt when the

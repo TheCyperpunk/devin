@@ -97,8 +97,8 @@ interface GameView extends Omit<GameState, 'queues' | 'applied' | 'rng'> {
 ```
 
 ### 4.3 Phone-side (IndexedDB `pralayam`)
-- store `gameOutbox` keyed by order `id`: `{ id, seq, order, createdAtLocal, attempts, nextTryAt, outcome? }`.
-- `settings.game`: `{ gameId, lastView: GameView, receivedAt, nextSeq, color }`.
+- store `gameOutbox` keyed by order `id`: `{ id, seq, order, gameId, createdAtLocal, attempts, nextTryAt }`. An entry leaves the store as soon as the hub answers for it, whatever the answer: from then on the hub's `you.queued` is the truth.
+- settings: `gameId`, `nextSeq`, `lastView`, `lastViewAt`, `color` (beside `deviceId`, `deviceToken`, `hubId`, `reporterName`, `lang`).
 - Backoff and reconnect rules identical to reports (D8). A new `gameId` from the hub clears the outbox and
   `nextSeq` (a new game, old orders mean nothing).
 
