@@ -52,11 +52,11 @@ export function App() {
       <TopBar view={view} hubNow={hubNow} hub={state.hub} />
       <main className="stage">
         <div className="mapWrap">
-          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} pops={pops} />
+          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} pops={pops} outSince={state.outSince} />
           <Toasts toasts={state.toasts} />
           {state.notice && <div className="notice">{state.notice}</div>}
         </div>
-        {view && <Panel view={view} />}
+        {view && <Panel view={view} outSince={state.outSince} />}
       </main>
       <BottomBar view={view} join={state.join} store={store} busy={state.busy} sound={state.sound} />
       {showLobby && <Lobby view={view?.phase === 'lobby' ? view : null} join={state.join} store={store} busy={state.busy} />}

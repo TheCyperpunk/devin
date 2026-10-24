@@ -265,6 +265,67 @@ describe('rounds', () => {
   });
 });
 
+describe('dead zones (D16)', () => {
+  /** Walk Asha jetty -> mundamveli -> j_mid -> bendhouse with one order per round. */
+  async function walkIntoTheBend(asha: string) {
+    let seq = 1;
+    for (const node of ['mundamveli', 'j_mid', 'bendhouse']) {
+      await call('POST', '/api/game/orders', { token: asha, body: { orders: [ord(seq++, { type: 'move', nodeId: node })] } });
+      clock += 45_000;
+      env.timers.run();
+    }
+    return seq;
+  }
+
+  it('inside a dead zone the hub answers "noSignal" to state and orders, and pushes nothing to that phone', async () => {
+    const { host, asha } = await running();
+    const crewWs = await socket(asha);
+    const hostWs = await socket(host);
+    const seq = await walkIntoTheBend(asha);
+    expect(boat(await view(host), 'dev-asha').nodeId).toBe('bendhouse');
+    expect((await call('GET', '/api/game/state', { token: asha })).json).toEqual({ noSignal: true });
+    const r = await call('POST', '/api/game/orders', { token: asha, body: { orders: [ord(seq, { type: 'rescue' })] } });
+    expect(r.json).toEqual({ noSignal: true });
+    expect((await view(host)).contact['dev-asha']).toBe(false);
+    await settle();
+    const last = crewWs.msgs.filter((m) => m.type === 'game:state').at(-1) as { payload: { view: GameView } } | undefined;
+    expect(last && boat(last.payload.view, 'dev-asha').nodeId).toBe('bendhouse'); // "you have arrived" still came through
+    const before = crewWs.msgs.length;
+    clock += 45_000;
+    env.timers.run(); // a round passes: the host hears about it, the phone in the bend does not
+    await settle();
+    expect(hostWs.types().filter((t) => t === 'game:round').length).toBeGreaterThanOrEqual(1);
+    expect(crewWs.msgs.length).toBe(before);
+    expect((await view(host)).round).toBe(5);
+    crewWs.ws.close();
+    hostWs.ws.close();
+  });
+
+  it('a standing order brings the boat out; the orders the phone kept then arrive and play in sequence, once', async () => {
+    const { host, asha } = await running();
+    await call('POST', '/api/game/orders', { token: asha, body: { orders: [ord(1, { type: 'standing', mode: 'return' })] } });
+    const seq = await walkIntoTheBend(asha);
+    expect(boat(await view(host), 'dev-asha').nodeId).toBe('bendhouse');
+    clock += 45_000;
+    env.timers.run(); // no order reaches the hub: standing order = return -> one step out
+    expect(boat(await view(host), 'dev-asha').nodeId).not.toBe('bendhouse');
+    expect(await call('GET', '/api/game/state', { token: asha }).then((r) => 'view' in r.json)).toBe(true); // in range again
+    const o1 = ord(seq, { type: 'hold' });
+    const o2 = ord(seq + 1, { type: 'hold' });
+    const r = await call('POST', '/api/game/orders', { token: asha, body: { orders: [o1, o2, o1] } });
+    expect(r.json.results.map((x: { result: string }) => x.result)).toEqual(['queued', 'queued', 'duplicate']);
+    const node = boat(await view(host), 'dev-asha').nodeId;
+    clock += 45_000;
+    env.timers.run();
+    clock += 45_000;
+    env.timers.run();
+    const replay = (await call('GET', '/api/game/replay', { token: host })).json;
+    expect(replay.state.applied['dev-asha']).toBe(seq + 1);
+    expect(replay.state.queues['dev-asha']).toEqual([]);
+    expect(boat(await view(host), 'dev-asha').nodeId).toBe(node); // two holds: it stayed put, no standing move
+  });
+});
+
 describe('restart', () => {
   it('a new hub on the same database resumes the game at the same revision and round', async () => {
     const { host, asha } = await running();

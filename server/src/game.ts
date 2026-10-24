@@ -90,6 +90,17 @@ export class GameService {
     return toView(this.withHeard(this.state), this.ward, this.now(), this.revision, youDeviceId);
   }
 
+  /** False while this crew's boat sits in a dead zone: the hub then neither answers nor pushes to that phone (D16). */
+  hasSignal(deviceId: string): boolean {
+    const b = this.state?.boats.find((x) => x.id === deviceId);
+    return !b || (this.ward.node(b.nodeId)?.signal ?? true);
+  }
+
+  /** Crews whose phones must not receive pushes right now. */
+  private muted(s: GameState): Set<string> {
+    return new Set(s.boats.filter((b) => !b.bot && !(this.ward.node(b.nodeId)?.signal ?? true)).map((b) => b.id));
+  }
+
   // ---------------- host ----------------
 
   newGame(req: NewGameRequest = {}): GameView {
@@ -185,11 +196,15 @@ export class GameService {
   }
 
   private commit(next: GameState, youFor: string[] = []): void {
+    // Mute by where boats stood BEFORE this change: the update that carries a boat into the bend still reaches its
+    // phone ("you have arrived, the radio is dead"); from the next change on, nothing does.
+    const mute = this.muted(this.state && this.state.id === next.id ? this.state : next);
     const s = this.heardAt.size ? markHeardAll(next, this.heardAt) : next;
     this.state = s;
     this.db.saveGame(s, this.now());
-    this.events.gameState(this.view()!);
+    this.events.gameState(this.view()!, mute);
     for (const id of youFor) {
+      if (mute.has(id)) continue;
       const you = this.view(id)?.you;
       if (you) this.events.gameYou(id, you);
     }
@@ -210,7 +225,7 @@ export class GameService {
     const t0 = performance.now();
     const r = resolveRound(this.withHeard(s), this.ward, this.now());
     const out = r.state.boats.filter((b) => !b.bot && !this.inContact(r.state, b.id)).length;
-    this.events.gameRound({ round: s.round, events: r.events, scoreAfter: r.state.score, waterLevel: r.state.waterLevel });
+    this.events.gameRound({ round: s.round, events: r.events, scoreAfter: r.state.score, waterLevel: r.state.waterLevel }, this.muted(s));
     this.commit(r.state, r.state.boats.filter((b) => !b.bot).map((b) => b.id));
     console.log(`[game] round ${s.round} resolved in ${(performance.now() - t0).toFixed(0)} ms, ${s.boats.length} boats (${out} out of contact), score ${r.state.score}${r.state.phase === 'ended' ? ' — first light' : ''}`);
   }

@@ -9,8 +9,9 @@ import type { HubDb } from './db.js';
 /** What the REST layer needs to tell connected clients. Tests can pass a no-op. */
 export interface Events {
   deviceRevoked(deviceId: string): void;
-  gameState(view: GameView): void;
-  gameRound(payload: GameRoundPayload): void;
+  /** `mute`: device ids inside a dead zone, which must hear nothing (D16). */
+  gameState(view: GameView, mute?: ReadonlySet<string>): void;
+  gameRound(payload: GameRoundPayload, mute?: ReadonlySet<string>): void;
   gameYou(deviceId: string, you: NonNullable<GameView['you']>): void;
 }
 
@@ -107,12 +108,12 @@ export class WsHub implements Events {
     }
   }
 
-  gameState(view: GameView): void {
-    for (const c of this.clients) if (c.auth) send(c.ws, { type: 'game:state', payload: { view } });
+  gameState(view: GameView, mute?: ReadonlySet<string>): void {
+    for (const c of this.clients) if (c.auth && !isMuted(c.auth, mute)) send(c.ws, { type: 'game:state', payload: { view } });
   }
 
-  gameRound(payload: GameRoundPayload): void {
-    for (const c of this.clients) if (c.auth) send(c.ws, { type: 'game:round', payload });
+  gameRound(payload: GameRoundPayload, mute?: ReadonlySet<string>): void {
+    for (const c of this.clients) if (c.auth && !isMuted(c.auth, mute)) send(c.ws, { type: 'game:round', payload });
   }
 
   gameYou(deviceId: string, you: NonNullable<GameView['you']>): void {
@@ -120,6 +121,10 @@ export class WsHub implements Events {
       if (c.auth?.role === 'device' && c.auth.deviceId === deviceId) send(c.ws, { type: 'game:you', payload: you });
     }
   }
+}
+
+function isMuted(auth: Auth, mute?: ReadonlySet<string>): boolean {
+  return auth.role === 'device' && !!mute?.has(auth.deviceId);
 }
 
 function send(ws: WebSocket, msg: ServerMessage): void {

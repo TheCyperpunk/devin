@@ -9,8 +9,8 @@ function browserEnv(): Env {
   return {
     api: {
       health: () => api.health(),
-      state: (token, after) => request<{ view: GameView } | { unchanged: true; revision: number; serverTime: number }>('GET', `/api/game/state?after=${after}`, { token }),
-      orders: (token, items) => request<{ results: OrderResult[]; view: GameView }>('POST', '/api/game/orders', { token, body: { orders: items }, timeoutMs: 15_000 }),
+      state: (token, after) => request<{ view: GameView } | { unchanged: true; revision: number; serverTime: number } | { noSignal: true }>('GET', `/api/game/state?after=${after}`, { token }),
+      orders: (token, items) => request<{ results: OrderResult[]; view: GameView } | { noSignal: true }>('POST', '/api/game/orders', { token, body: { orders: items }, timeoutMs: 15_000 }),
       join: (token, color: BoatColor) => request<{ view: GameView }>('POST', '/api/game/join', { token, body: { color } }),
     },
     now: () => Date.now(),

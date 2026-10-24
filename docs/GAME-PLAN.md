@@ -65,7 +65,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Gate:** three real phones on the hotspot finish a game; every tap target ≥ 56 px; no overflow at 320 px.
 - Done: `web/src/lib/db.ts` (settings + `gameOutbox` store, IndexedDB `pralayam` v2), `web/src/lib/gameSync.ts` (health → catch-up → send due orders in batches → merge the view; replace / append seq semantics, backoff 1→30 s, reconnect makes all due, `late`/`invalid` notices, a new game id clears the outbox, hub reset or replaced token → pair again; last view restored from the phone on reload), `web/src/play/` (`orders.ts` legal orders + round estimate, `Order.tsx` strip/mini map/rows/standing order/Send + Queue-as-next, `MiniMap.tsx`, `End.tsx`, `useGame.ts`). `npm run e2e:play` pairs two phones from the QR link and plays to first light. The gate on real phones is still to run by hand.
 
-## G5 — Works Anyway for real
+## G5 — Works Anyway for real ✅ (hub enforces dead zones; 3 hub + 1 sync tests; `npm run e2e:deadzone` walks a phone into the bend, queues two orders, comes out, then airplane mode)
 - Dead-zone UX: banner, estimated round, greyed last-known map, queued count; standing order prompt when the
   next move enters a dead zone ("you will lose signal: standing order?").
 - Hub: `contact` from signal × last-heard; "no signal since R" on the screen; `standing_used` events.
@@ -73,6 +73,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Tests: phone offline for two rounds then reconnect → orders apply to the next two rounds, zero duplicates
   (unit with fake env + e2e with `page.setOfflineMode`).
 - **Gate:** the GAME-DESIGN §5.4 demo works three times in a row on real phones.
+- Done: `GameService.hasSignal` + muted pushes (`ws.ts`), `{ noSignal: true }` answers in `gameRoutes.ts`; phone `gameSync` keeps orders with a 5 s retry while quiet and polls every 5 s; the order screen's banner shows the estimated round and the last update, the map dims, a prompt before entering a dead zone offers "Set Return and go"; the big screen shows "no signal since R<n>" in the crew list and on the boat; `docs/DEMO.md` has the words. The three-times-in-a-row gate on real phones is still to run by hand.
 
 ## G6 — Polish and playtest
 - Sound on the screen, haptics on the phone, rain and reduced-motion, end-screen lines, Malayalam check by a

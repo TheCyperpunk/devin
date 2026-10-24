@@ -25,6 +25,24 @@ const exe = [
 ].find((p) => p && existsSync(p));
 if (!exe) throw new Error('No Chrome/Edge found; set BROWSER=path');
 const joinCode = () => new Database(DB, { readonly: true }).prepare("select value from meta where key = 'join_code'").get().value;
+const gameState = () => JSON.parse(new Database(DB, { readonly: true }).prepare("select state_json from game where id = (select value from meta where key = 'current_game_id')").get().state_json);
+/** Orders the hub has received from a crew: still queued plus already played. */
+const received = (id) => {
+  const g = gameState();
+  return (g.queues[id] ?? []).length + (g.applied[id] ?? 0);
+};
+async function waitHub(fn, ms = 8000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    try {
+      if (fn()) return true;
+    } catch {
+      /* db busy */
+    }
+    await sleep(100);
+  }
+  return false;
+}
 const passcode = (readFileSync(path.join(root, '.env'), 'utf8').match(/^COORDINATOR_PASSCODE=(.*)$/m) ?? [])[1]?.trim();
 
 let failed = 0;
@@ -99,7 +117,7 @@ try {
   await tap(phones[1], '[data-screen=order] .row[data-node=mundamveli]');
   ok(await waitSel(phones[1], '[data-testid=queue-next]'), 'phone Rahul: "queue as next" offered');
   await tap(phones[1], '[data-testid=queue-next]');
-  ok(await waitText(phones[1], '2 queued'), 'phone Rahul: two orders queued');
+  ok(await waitHub(() => received('dev-rahul') >= 2 || received(gameState().boats.find((b) => b.name === 'Rahul')?.id) >= 2), 'hub: Rahul\'s second order arrived behind the first');
 
   // ---- resolve: the screen skips the round (the hub would also have resolved early: both crews ordered)
   await sleep(400);

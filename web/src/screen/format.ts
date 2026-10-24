@@ -66,6 +66,8 @@ export function toastFor(e: GameEvent, view: GameView | null): Omit<Toast, 'id' 
       return { text: `${who}: ${n} still aboard at first light`, points: e.points, tone: 'info' };
     case 'invalid':
       return { text: `${who}: that order could not be carried out`, points: 0, tone: 'info' };
+    case 'standing_used':
+      return view?.boats.find((b) => b.id === e.boatId)?.bot ? null : { text: `${who} is out of contact: standing order`, points: 0, tone: 'info' };
     default:
       return null;
   }

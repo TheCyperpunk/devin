@@ -34,6 +34,8 @@ class FakeHub {
   revision = 0;
   time = T;
   fail: 'network' | 'unauthorized' | 'no_game' | 'rate_limited' | 'network-after' | null = null;
+  /** The boat is in a dead zone: the hub answers nothing useful (D16). */
+  noSignal = false;
   failHealth = false;
   calls = { orders: [] as { id: string; seq: number; order: Order }[][], state: 0, join: 0 };
   opened = 0;
@@ -65,6 +67,7 @@ class FakeHub {
       state: async (_t, after) => {
         this.calls.state++;
         this.boom();
+        if (this.noSignal) return { noSignal: true as const };
         if (!this.state) throw new ApiFail('no_game', 'none');
         if (after >= this.revision) return { unchanged: true, revision: this.revision, serverTime: this.time };
         return { view: this.view() };
@@ -72,6 +75,7 @@ class FakeHub {
       orders: async (_t, items) => {
         this.calls.orders.push(items);
         this.boom();
+        if (this.noSignal) return { noSignal: true as const };
         if (!this.state) throw new ApiFail('no_game', 'none');
         const results: OrderResult[] = [];
         for (const it of items) {
@@ -225,6 +229,31 @@ describe('orders through the outbox', () => {
     await sync.kick();
     expect(hubQueue()).toEqual([1]);
     expect(hub.state!.boats[0]!.standingOrder).toBe('return');
+  });
+});
+
+describe('dead zones', () => {
+  it('while the hub answers noSignal the orders wait on the phone (hub online, noSignal set) and go when it answers again', async () => {
+    hub.open();
+    await begin();
+    hub.noSignal = true;
+    await sync.kick();
+    expect(sync.state.noSignal).toBe(true);
+    expect(sync.state.hub).toBe('online');
+    expect(sync.state.view?.round).toBe(1); // last known view kept
+    await sync.submit({ type: 'rescue' });
+    await sync.submit({ type: 'move', nodeId: 'j_mid' }, 'append');
+    await sync.kick();
+    expect(await outboxCount()).toBe(2);
+    expect(hubQueue()).toEqual([]);
+    const sent = hub.calls.orders.length;
+    hub.noSignal = false;
+    hub.time += 5000; // the 5 s backoff from the noSignal answer has passed
+    await sync.kick();
+    expect(sync.state.noSignal).toBe(false);
+    expect(await outboxCount()).toBe(0);
+    expect(hubQueue()).toEqual([1, 2]);
+    expect(hub.calls.orders.length).toBe(sent + 1);
   });
 });
 

@@ -119,6 +119,12 @@ points. Events are what the big screen animates and what the phone uses for "you
   the moment it arrives (it is not a turn).
 
 ### 5.3 On the hub, while a boat is out of contact
+- **The hub enforces the dead zone** (G5): while a crew's boat stands on a node without signal, `GET /api/game/state`
+  and `POST /api/game/orders` from that phone answer `{ "noSignal": true }` and nothing is pushed to it. The phone
+  keeps its orders in the outbox and retries every 5 s; they arrive the moment the boat is back in range. So the
+  mechanic works even without airplane mode, and airplane mode on top of it changes nothing.
+- The only way out of a dead zone is an order queued before entering, or the standing order. The phone therefore
+  asks before a move into a dead zone: "Set Return and go" / "Go anyway".
 - The boat follows its standing order each round (`hold` or `return`).
 - The big screen shows the boat dimmed with "out of contact since round N" and a dotted "last heard" line.
 - When orders arrive, results come back per order (`queued`/`replaced`/`duplicate`/`late`) and the phone marks

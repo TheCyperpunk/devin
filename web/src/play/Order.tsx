@@ -5,7 +5,7 @@ import { COLOR_PX } from '../game/sprites.js';
 import type { GameSync, GameSyncState } from '../lib/gameSync.js';
 import { useLang } from './lang.js';
 import { MiniMap } from './MiniMap.js';
-import { estimatedRound, legalOrders, nodeName, type OrderOption } from './orders.js';
+import { NODES, estimatedRound, legalOrders, nodeName, type OrderOption } from './orders.js';
 import { useTick } from './useGame.js';
 
 const KIT_ICON = { water: '💧', food: '🍚', medical: '🩺' } as const;
@@ -21,8 +21,10 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const hubNow = now + state.clockOffset;
   const [picked, setPicked] = useState<number | null>(null);
   const [sentAt, setSentAt] = useState<number | null>(null);
+  const [warn, setWarn] = useState<'replace' | 'append' | null>(null);
   const options = legalOrders(view, boat);
-  const contact = state.hub === 'online' && (view.contact[boat.id] ?? true) && (state.viewAt === null || now - state.viewAt < 25_000);
+  const inZone = !(NODES[boat.nodeId]?.signal ?? true);
+  const contact = state.hub === 'online' && !state.noSignal && !inZone && (state.viewAt === null || now - state.viewAt < 25_000);
   const unapplied = state.unsent + state.queued;
   const remaining = view.deadlineAt !== null ? view.deadlineAt - hubNow : 0;
   const round = contact ? view.round : estimatedRound(view, hubNow);
@@ -35,13 +37,20 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
     return () => window.clearTimeout(id);
   }, [sentAt]);
 
-  async function send(mode: 'replace' | 'append') {
+  async function send(mode: 'replace' | 'append', force = false) {
     if (picked === null) return;
     const o = options[picked];
     if (!o) return;
+    // Heading into a dead zone: make sure the crew knows what the boat will do once the phone goes quiet.
+    if (o.kind === 'move' && o.deadZone && contact && !force) return setWarn(mode);
+    setWarn(null);
     await sync.submit(o.order, mode);
     setSentAt(Date.now());
     setPicked(null);
+  }
+  async function goWithReturn(mode: 'replace' | 'append') {
+    if (boat.standingOrder !== 'return') await sync.submit({ type: 'standing', mode: 'return' }, 'append');
+    await send(mode, true);
   }
   async function standing(mode: 'hold' | 'return') {
     const o: Order = { type: 'standing', mode };
@@ -80,16 +89,33 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   return (
     <div className="stack" data-screen="order">
       {!contact && (
-        <div className="banner" role="status">
+        <div className="banner" role="status" data-testid="no-signal">
           <span className="radio">✕</span>
           <span>
-            {t('noSignal')}
+            {state.hub === 'offline' ? t('hubOffline') : t('noSignal')}
             {unapplied ? ` · ${t('ordersQueued', { n: unapplied })}` : ''}
             <br />
-            <small>{t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })}</small>
+            <small>
+              {t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })} · ~{t('roundN', { n: round })}
+            </small>
           </span>
-          <button type="button" className="btn small" onClick={() => void sync.retryNow()}>
+          <button type="button" className="btn small" onClick={() => void sync.retryNow()} data-testid="retry">
             {t('retryNow')}
+          </button>
+        </div>
+      )}
+      {warn !== null && (
+        <div className="panel pad stack warn" role="alertdialog" aria-label={t('deadZoneTitle')} data-testid="dead-zone-warn">
+          <div className="display h2">{t('deadZoneTitle')}</div>
+          <p>{t('deadZoneBody')}</p>
+          <button type="button" className="btn lamp big" onClick={() => void goWithReturn(warn)} data-testid="go-return">
+            {t('deadZoneGoReturn')}
+          </button>
+          <button type="button" className="btn big" onClick={() => void send(warn, true)} data-testid="go-anyway">
+            {t('deadZoneGoAnyway')}
+          </button>
+          <button type="button" className="btn big ghost" onClick={() => setWarn(null)}>
+            {t('cancel')}
           </button>
         </div>
       )}

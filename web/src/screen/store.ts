@@ -22,6 +22,8 @@ export interface ScreenState {
   lastRoundAt: number | null;
   toasts: Toast[];
   join: JoinInfo | null;
+  /** boatId -> the round a crew went out of contact (cleared when heard again). */
+  outSince: Record<string, number>;
   busy: boolean;
   notice: string | null;
   sound: boolean;
@@ -70,6 +72,7 @@ export class ScreenStore {
       lastRoundAt: null,
       toasts: [],
       join: null,
+      outSince: {},
       busy: false,
       notice: null,
       sound: false,
@@ -193,7 +196,13 @@ export class ScreenStore {
   /** Keep a view only if it is newer than what we hold (same rule as reports: by revision). */
   private merge(view: GameView): boolean {
     if (this.state.view && view.revision <= this.state.view.revision) return false;
-    this.set({ view, noGame: false, clockOffset: clockOffset(view.serverTime, this.env.now()) });
+    const outSince = { ...this.state.outSince };
+    for (const b of view.boats) {
+      if (b.bot) continue;
+      if (view.contact[b.id] === false) outSince[b.id] ??= view.round;
+      else delete outSince[b.id];
+    }
+    this.set({ view, noGame: false, outSince, clockOffset: clockOffset(view.serverTime, this.env.now()) });
     return true;
   }
 

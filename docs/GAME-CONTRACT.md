@@ -107,10 +107,12 @@ interface GameView extends Omit<GameState, 'queues' | 'applied' | 'rng'> {
 Crew (device token):
 - `POST /join` `{ color: BoatColor }` → `200 { view: GameView }`. Idempotent. Lobby or mid-game (boat appears
   at the jetty from the next round). `409 game_over` after the end.
-- `GET /state?after=<rev>` → `200 { view }` or `200 { unchanged: true, revision, serverTime }`.
+- `GET /state?after=<rev>` → `200 { view }` or `200 { unchanged: true, revision, serverTime }`; `200 { noSignal: true }` while
+  the crew's boat is in a dead zone (nothing else is revealed).
 - `POST /orders` `{ orders: [{ id: uuidv4, seq: int ≥ 1, order: Order }] }` (max 20, strict) →
   `200 { results: [{ id, result: 'queued' | 'replaced' | 'duplicate' | 'late' | 'invalid' | 'ended' | 'not_joined', message? }], view }`.
-  Each item stands alone. `standing` orders are applied immediately and answer `queued`.
+  Each item stands alone. `standing` orders are applied immediately and answer `queued`. From a dead zone the whole
+  request answers `200 { noSignal: true }` and nothing is queued: the phone keeps the orders.
 
 Host (coordinator session):
 - `POST /new` `{ scenarioId, roundSeconds?: 30 | 45 | 60, bots?: boolean }` → `{ view }` (ends any current game).
@@ -121,7 +123,8 @@ Host (coordinator session):
 Error codes: existing ones plus `game_over`, `not_joined`, `no_game`.
 
 ## 6. WebSocket (existing `/ws`, after `auth:ok`)
-- hub → all: `game:state { view: GameView }` on every revision (view without `you`; phones overlay their own).
+- hub → all except crews in a dead zone: `game:state { view: GameView }` on every revision (view without `you`;
+  phones overlay their own).
 - hub → all: `game:round { round, events, scoreAfter, waterLevel }` right after a resolve, before the next
   `game:state`, so screens can animate before showing the new positions.
 - hub → crew: `game:you { boatId, queued, nextSeq }` whenever that crew's queue changes.

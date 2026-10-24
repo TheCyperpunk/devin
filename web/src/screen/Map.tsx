@@ -119,7 +119,7 @@ export function popsFor(events: GameEvent[], key: number): Pop[] {
   return [...byNode].map(([nodeId, pts]) => ({ id: `${key}-${nodeId}`, nodeId, text: (pts > 0 ? '+' : '') + pts, tone: pts > 0 ? 'good' : 'bad' }));
 }
 
-export function WardMap({ view, dim, pops = [] }: { view: GameView | null; dim?: boolean; pops?: Pop[] }) {
+export function WardMap({ view, dim, pops = [], outSince }: { view: GameView | null; dim?: boolean; pops?: Pop[]; outSince?: Record<string, number> }) {
   const zones = useMemo(deadZones, []);
   const water = view?.waterLevel ?? 0;
   const e = useMemo(() => edges(water), [water]);
@@ -296,7 +296,7 @@ export function WardMap({ view, dim, pops = [] }: { view: GameView | null; dim?:
                 ))}
                 <text y="-34" fill={contact ? P.white : P.grey} stroke={P.black} strokeWidth="2" paintOrder="stroke">
                   {initials(b.name)}
-                  {contact ? '' : ' ✕'}
+                  {contact ? '' : outSince?.[b.id] ? ` ✕ R${outSince[b.id]}` : ' ✕'}
                 </text>
                 {!contact && <Sprite name="radioOff" x={26} y={-26} />}
               </g>

@@ -50,6 +50,7 @@ export function createGameRoutes(ctx: GameRoutesContext): Router {
     if (!env.success) return fail(res, 400, 'invalid_body', env.error.issues[0]?.message ?? 'Invalid request');
     const auth = authOf(res);
     if (auth.role !== 'device') return;
+    if (!game.hasSignal(auth.deviceId)) return res.json({ noSignal: true }); // the orders stay in the phone's outbox
     const out = game.orders(auth.deviceId, env.data.orders);
     if ('error' in out) return fail(res, 404, 'no_game', 'No game is open');
     res.json(out);
@@ -60,6 +61,7 @@ export function createGameRoutes(ctx: GameRoutesContext): Router {
   r.get('/state', anyone, (req, res) => {
     const auth = authOf(res);
     const you = auth.role === 'device' ? auth.deviceId : undefined;
+    if (you && !game.hasSignal(you)) return res.json({ noSignal: true }); // no news reaches the bend
     if (you) game.heard(you);
     const view = game.view(you);
     if (!view) return fail(res, 404, 'no_game', 'No game is open');

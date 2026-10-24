@@ -18,7 +18,7 @@ export function Icon({ name, size = 16, title }: { name: SpriteName; size?: numb
   );
 }
 
-export function Panel({ view }: { view: GameView }) {
+export function Panel({ view, outSince = {} }: { view: GameView; outSince?: Record<string, number> }) {
   const open = view.calls
     .filter((c) => c.status === 'open')
     .map((c) => ({ c, u: view.urgency[c.id] ?? { score: 0, band: 'yellow' as const } }))
@@ -74,7 +74,7 @@ export function Panel({ view }: { view: GameView }) {
               {!contact && <Icon name="radioOff" title="no signal" size={14} />}
               <span className="r">
                 {nodeName(b.nodeId)} · {b.passengers.length}/{GAME.capacity}
-                {contact ? '' : ' · no signal'}
+                {contact ? '' : outSince[b.id] ? ` · no signal since R${outSince[b.id]}` : ' · no signal'}
                 {b.plan === 'return' ? ' · returning' : ''}
               </span>
             </div>

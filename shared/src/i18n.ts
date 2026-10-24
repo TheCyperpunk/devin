@@ -88,6 +88,11 @@ const en = {
   teamSaved: 'The team saved {n} of {of}.',
   youDelivered: 'You delivered {n}.',
   lookAtScreen: 'Look at the big screen for the full story.',
+  deadZoneTitle: 'No signal there',
+  deadZoneBody: 'Your phone will not reach the hub in that place. Orders you queue there wait until you are back in range, and the boat follows its standing order meanwhile.',
+  deadZoneGoReturn: 'Set "Return" and go',
+  deadZoneGoAnyway: 'Go anyway',
+  cancel: 'Cancel',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -172,6 +177,11 @@ const ml: Record<StringKey, string> = {
   teamSaved: 'ടീം {of}-ൽ {n} പേരെ രക്ഷിച്ചു.',
   youDelivered: 'നിങ്ങൾ {n} പേരെ എത്തിച്ചു.',
   lookAtScreen: 'മുഴുവൻ കഥയ്ക്ക് വലിയ സ്ക്രീൻ നോക്കുക.',
+  deadZoneTitle: 'അവിടെ സിഗ്നൽ ഇല്ല',
+  deadZoneBody: 'ആ സ്ഥലത്ത് നിങ്ങളുടെ ഫോണിന് ഹബ്ബിനെ കിട്ടില്ല. അവിടെ നൽകുന്ന ഓർഡറുകൾ തിരിച്ചു റേഞ്ചിൽ വരുമ്പോൾ പോകും; അതുവരെ ബോട്ട് സ്റ്റാൻഡിംഗ് ഓർഡർ പാലിക്കും.',
+  deadZoneGoReturn: '"മടങ്ങുക" സെറ്റ് ചെയ്ത് പോകുക',
+  deadZoneGoAnyway: 'എന്തായാലും പോകുക',
+  cancel: 'റദ്ദാക്കുക',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ml };

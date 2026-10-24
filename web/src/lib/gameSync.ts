@@ -37,13 +37,15 @@ export interface GameSyncState {
   clockOffset: number;
   /** One-line message for the crew (a late order, an invalid one); cleared on the next send. */
   notice: string | null;
+  /** The hub is reachable but our boat is in a dead zone: it tells us nothing and takes nothing (D16). */
+  noSignal: boolean;
   version: number;
 }
 
 export interface GameApi {
   health(): Promise<HealthResponse>;
-  state(token: string, after: number): Promise<{ view: GameView } | { unchanged: true; revision: number; serverTime: number }>;
-  orders(token: string, items: { id: string; seq: number; order: Order }[]): Promise<{ results: OrderResult[]; view: GameView }>;
+  state(token: string, after: number): Promise<{ view: GameView } | { unchanged: true; revision: number; serverTime: number } | { noSignal: true }>;
+  orders(token: string, items: { id: string; seq: number; order: Order }[]): Promise<{ results: OrderResult[]; view: GameView } | { noSignal: true }>;
   join(token: string, color: BoatColor): Promise<{ view: GameView }>;
 }
 export interface SocketLike {
@@ -77,6 +79,7 @@ export class GameSync {
     needsPairing: false,
     clockOffset: 0,
     notice: null,
+    noSignal: false,
     version: 0,
   };
   private listeners = new Set<Listener>();
@@ -87,6 +90,7 @@ export class GameSync {
   private socketBackoff: number = TIMING.backoffStartMs;
   private socketTimer: unknown = null;
   private stopped = true;
+  private deviceId: string | null = null;
 
   constructor(private env: Env) {}
 
@@ -109,6 +113,7 @@ export class GameSync {
     this.set({ needsPairing: false });
     void getSettings().then(async (s) => {
       if (this.stopped) return;
+      this.deviceId = s.deviceId ?? null;
       if (s.lastView && !this.state.view) this.set({ view: s.lastView, viewAt: s.lastViewAt ?? null });
       this.set({ nextSeq: await this.nextSeqFrom(s.nextSeq ?? 1), unsent: await outboxCount() });
       void this.kick();
@@ -196,7 +201,9 @@ export class GameSync {
     const hubQueued = this.state.queued;
     let seq = this.state.nextSeq;
     if (mode === 'replace' && order.type !== 'standing') {
-      const last = pending.length ? pending[pending.length - 1]! : null;
+      // a standing order waiting in the outbox is not a turn: never replace it
+      const turns = pending.filter((e) => e.order.type !== 'standing');
+      const last = turns.length ? turns[turns.length - 1]! : null;
       if (last) {
         seq = last.seq;
         await dropOrders([last.id]);
@@ -255,7 +262,15 @@ export class GameSync {
       this.set({ sending: true, unsent: await outboxCount() });
       const ids = due.map((e) => e.id);
       try {
-        const { results, view } = await this.env.api.orders(token, due.map((e) => ({ id: e.id, seq: e.seq, order: e.order })));
+        const res = await this.env.api.orders(token, due.map((e) => ({ id: e.id, seq: e.seq, order: e.order })));
+        if ('noSignal' in res) {
+          // In the bend: the orders wait on the phone and go the moment we are back in range.
+          await backoffOrders(ids, this.env.now(), 5000);
+          this.set({ noSignal: true });
+          break;
+        }
+        const { results, view } = res;
+        this.set({ noSignal: false });
         const answered = results.filter((r) => ids.includes(r.id));
         await dropOrders(answered.map((r) => r.id)); // every answer settles the order: the hub has it, or it never will
         const unanswered = ids.filter((id) => !answered.some((r) => r.id === id));
@@ -290,6 +305,8 @@ export class GameSync {
   private async catchUp(token: string): Promise<void> {
     try {
       const res = await this.env.api.state(token, this.state.view?.revision ?? 0);
+      if ('noSignal' in res) return this.set({ noSignal: true, noGame: false });
+      this.set({ noSignal: false });
       if ('view' in res) await this.merge(res.view);
       else this.set({ clockOffset: clockOffset(res.serverTime, this.env.now()), noGame: false });
     } catch (err) {
@@ -344,7 +361,9 @@ export class GameSync {
   private scheduleTick(): void {
     this.env.clearTimeout(this.timer);
     if (this.stopped || this.state.needsPairing) return;
-    const delay = this.state.unsent > 0 ? 5000 : this.state.socket ? 60_000 : 5000;
+    // No pushes reach a muted phone, so poll every 5 s while in a dead zone (or out of contact by the last view) too.
+    const quiet = this.state.noSignal || (this.deviceId !== null && this.state.view?.contact[this.deviceId] === false);
+    const delay = this.state.unsent > 0 || quiet ? 5000 : this.state.socket ? 60_000 : 5000;
     this.timer = this.env.setTimeout(() => void this.kick(), delay);
   }
 
