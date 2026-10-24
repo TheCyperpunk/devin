@@ -92,7 +92,7 @@ interface GameView extends Omit<GameState, 'queues' | 'applied' | 'rng'> {
   revision: number; serverTime: number;
   contact: Record<string, boolean>;        // boatId -> in contact (signal at node AND heard in last 20 s)
   urgency: Record<string, { score: number; band: 'red' | 'orange' | 'yellow' }>;  // callId -> live score
-  you?: { boatId: string; queued: number; nextSeq: number };   // only in a crew's response
+  you?: { boatId: string; queued: number; nextSeq: number; queuedSeqs: number[] };   // only in a crew's response
 }
 ```
 

@@ -483,7 +483,7 @@ describe('contact and the view', () => {
     expect(Object.keys(v.urgency).sort()).toEqual(s.calls.map((c) => c.id).sort());
     expect(v.urgency[call(s, 'pallithode')!.id]).toEqual({ score: 55, band: 'orange' }); // rescue 35 + elderly 15 + 3 people 4.5
     expect(v.contact.p1).toBe(true);
-    expect(v.you).toEqual({ boatId: 'p1', queued: 2, nextSeq: 3 });
+    expect(v.you).toEqual({ boatId: 'p1', queued: 2, nextSeq: 3, queuedSeqs: [1, 2] });
     expect(toView(s, ward, T, 1).you).toBeUndefined();
   });
 });

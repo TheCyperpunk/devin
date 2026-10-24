@@ -246,6 +246,6 @@ export interface GameView extends Omit<GameState, 'queues' | 'applied' | 'recent
   contact: Record<string, boolean>;
   /** callId -> live urgency. */
   urgency: Record<string, CallUrgency>;
-  /** Only in a crew's own response. */
-  you?: { boatId: string; queued: number; nextSeq: number };
+  /** Only in a crew's own response. `queuedSeqs` are the unplayed seqs, lowest first, so a phone can replace them exactly. */
+  you?: { boatId: string; queued: number; nextSeq: number; queuedSeqs: number[] };
 }

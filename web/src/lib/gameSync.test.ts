@@ -232,12 +232,15 @@ describe('orders through the outbox', () => {
     await sync.kick();
     expect(hubQueue()).toEqual([1]);
     expect(hub.state!.queues[ME]![0]!.order).toEqual({ type: 'move', nodeId: 'kumbalam' });
-    expect(sync.state.nextSeq).toBe(4); // seqs are never reused downwards
     expect(sync.state.notice).toBeNull(); // the cancels raised nothing
+    await sync.plan([{ type: 'hold' }], null); // a third plan must replace seq 1 again, not land behind it
+    await sync.kick();
+    expect(hubQueue()).toEqual([1]);
+    expect(hub.state!.queues[ME]![0]!.order).toEqual({ type: 'hold' });
     hub.resolve();
     await sync.kick();
     expect(sync.state.plan).toBeNull(); // nothing queued any more
-    expect(hub.state!.boats[0]!.nodeId).toBe('kumbalam');
+    expect(hub.state!.boats[0]!.nodeId).toBe('jetty'); // the final plan was a hold
   });
 
   it('a standing order never replaces a queued move', async () => {
@@ -344,7 +347,7 @@ describe('socket and restore', () => {
     s.h.onMessage(JSON.stringify({ type: 'auth:ok', payload: { role: 'device', serverTime: hub.time } }));
     await new Promise((r) => setTimeout(r, 10));
     expect(sync.state.socket).toBe(true);
-    s.h.onMessage(JSON.stringify({ type: 'game:you', payload: { boatId: ME, queued: 1, nextSeq: 2 } }));
+    s.h.onMessage(JSON.stringify({ type: 'game:you', payload: { boatId: ME, queued: 1, nextSeq: 2, queuedSeqs: [1] } }));
     await new Promise((r) => setTimeout(r, 10));
     expect(sync.state.queued).toBe(1);
     expect(sync.state.nextSeq).toBe(2);

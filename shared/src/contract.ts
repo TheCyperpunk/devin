@@ -58,7 +58,7 @@ export type ServerMessage =
   | { type: 'auth:ok'; payload: { role: 'device' | 'coordinator'; serverTime: number } }
   | { type: 'game:state'; payload: { view: GameView } }
   | { type: 'game:round'; payload: GameRoundPayload }
-  | { type: 'game:you'; payload: { boatId: string; queued: number; nextSeq: number } };
+  | { type: 'game:you'; payload: NonNullable<GameView['you']> };
 
 export interface GameRoundPayload {
   round: number;

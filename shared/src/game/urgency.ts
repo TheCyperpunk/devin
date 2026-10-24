@@ -27,7 +27,7 @@ export function toView(state: GameState, ward: Ward, now: number, revision: numb
   if (youBoatId && state.boats.some((b) => b.id === youBoatId)) {
     const q = queues[youBoatId] ?? [];
     const last = Math.max(applied[youBoatId] ?? 0, ...q.map((o) => o.seq));
-    view.you = { boatId: youBoatId, queued: q.length, nextSeq: last + 1 };
+    view.you = { boatId: youBoatId, queued: q.length, nextSeq: last + 1, queuedSeqs: q.map((o) => o.seq) };
   }
   return view;
 }

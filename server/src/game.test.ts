@@ -143,7 +143,7 @@ describe('lobby and start', () => {
 
     const joined = (await call('POST', '/api/game/join', { token: asha, body: { color: 'ember' } })).json.view as GameView;
     expect(joined.boats.map((b) => [b.id, b.name, b.color])).toEqual([['dev-asha', 'Asha', 'ember']]);
-    expect(joined.you).toEqual({ boatId: 'dev-asha', queued: 0, nextSeq: 1 });
+    expect(joined.you).toEqual({ boatId: 'dev-asha', queued: 0, nextSeq: 1, queuedSeqs: [] });
     expect(joined.revision).toBe(2);
     expect((await call('POST', '/api/game/join', { token: asha, body: { color: 'ember', extra: 1 } })).status).toBe(400);
 
@@ -174,7 +174,7 @@ describe('orders over HTTP', () => {
     expect(r.status).toBe(200);
     expect(r.json.results.map((x: { result: string }) => x.result)).toEqual(['queued', 'duplicate', 'replaced', 'invalid', 'invalid', 'queued']);
     expect(r.json.results[3].id).toBe('bad');
-    expect(r.json.view.you).toEqual({ boatId: 'dev-asha', queued: 2, nextSeq: 4 });
+    expect(r.json.view.you).toEqual({ boatId: 'dev-asha', queued: 2, nextSeq: 4, queuedSeqs: [1, 3] });
     expect((await call('POST', '/api/game/orders', { token: asha, body: { orders: [] } })).status).toBe(400);
   });
 
@@ -248,7 +248,7 @@ describe('rounds', () => {
     const o2 = ord(2, { type: 'move', nodeId: 'vattappara' });
     const r = await call('POST', '/api/game/orders', { token: rahul, body: { orders: [o1, o2, o1] } });
     expect(r.json.results.map((x: { result: string }) => x.result)).toEqual(['queued', 'queued', 'duplicate']);
-    expect(r.json.view.you).toEqual({ boatId: 'dev-rahul', queued: 2, nextSeq: 3 });
+    expect(r.json.view.you).toEqual({ boatId: 'dev-rahul', queued: 2, nextSeq: 3, queuedSeqs: [1, 2] });
     expect(r.json.view.contact['dev-rahul']).toBe(true);
     clock += 45_000;
     env.timers.run();

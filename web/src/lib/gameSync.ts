@@ -25,8 +25,9 @@ export interface GameSyncState {
   sending: boolean;
   /** Orders still in this phone's outbox. */
   unsent: number;
-  /** Orders the hub holds for this crew, not yet played. */
+  /** Orders the hub holds for this crew, not yet played, and their seqs (lowest first). */
   queued: number;
+  queuedSeqs: number[];
   nextSeq: number;
   view: GameView | null;
   viewAt: number | null;
@@ -72,6 +73,7 @@ export class GameSync {
     sending: false,
     unsent: 0,
     queued: 0,
+    queuedSeqs: [],
     nextSeq: 1,
     view: null,
     viewAt: null,
@@ -229,17 +231,19 @@ export class GameSync {
     if (!gameId || steps.length === 0) return;
     const pending = await pendingOrders();
     const turns = pending.filter((e) => e.order.type !== 'standing');
-    const unapplied = this.state.queued + turns.length;
-    const base = this.state.nextSeq - unapplied;
     await dropOrders(turns.map((e) => e.id));
+    // The seqs that still hold a turn: what the hub reported, then what waited in the outbox. Each step takes one,
+    // lowest first; steps beyond them get fresh seqs; seqs left over are cancelled.
+    const slots = [...new Set([...this.state.queuedSeqs, ...turns.map((e) => e.seq)])].sort((a, b) => a - b);
     const now = this.env.now();
+    let nextSeq = this.state.nextSeq;
     for (let i = 0; i < steps.length; i++) {
-      await addOrder({ id: this.env.uuid(), seq: base + i, order: steps[i]!, gameId, createdAtLocal: now, attempts: 0, nextTryAt: 0 });
+      const seq = slots[i] ?? nextSeq++;
+      await addOrder({ id: this.env.uuid(), seq, order: steps[i]!, gameId, createdAtLocal: now, attempts: 0, nextTryAt: 0 });
     }
-    for (let seq = base + steps.length; seq < this.state.nextSeq; seq++) {
+    for (const seq of slots.slice(steps.length)) {
       await addOrder({ id: this.env.uuid(), seq, order: { type: 'cancel' }, gameId, createdAtLocal: now, attempts: 0, nextTryAt: 0 });
     }
-    const nextSeq = Math.max(this.state.nextSeq, base + steps.length);
     await setSettings({ nextSeq, gameId });
     this.set({ nextSeq, unsent: await outboxCount(), notice: null, plan: target ? { target, steps: steps.length } : null });
     this.changed();
@@ -357,7 +361,7 @@ export class GameSync {
     if (s.gameId && s.gameId !== view.id) {
       await clearOutbox();
       await setSettings({ gameId: view.id, nextSeq: view.you?.nextSeq ?? 1 });
-      this.set({ queued: 0, unsent: 0, nextSeq: view.you?.nextSeq ?? 1, lastRound: null, lastRoundAt: null, notice: null });
+      this.set({ queued: 0, queuedSeqs: [], unsent: 0, nextSeq: view.you?.nextSeq ?? 1, lastRound: null, lastRoundAt: null, notice: null });
     } else if (!s.gameId) {
       await setSettings({ gameId: view.id });
     }
@@ -375,7 +379,7 @@ export class GameSync {
     const nextSeq = await this.nextSeqFrom(you.nextSeq);
     await setSettings({ nextSeq });
     const unsent = await outboxCount();
-    this.set({ queued: you.queued, nextSeq, plan: you.queued + unsent === 0 ? null : this.state.plan });
+    this.set({ queued: you.queued, queuedSeqs: you.queuedSeqs ?? [], nextSeq, plan: you.queued + unsent === 0 ? null : this.state.plan });
   }
 
   /** The next seq must clear both what the hub has played/queued and what is still in the outbox. */
