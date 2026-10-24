@@ -3,7 +3,9 @@
 One phase per session, same discipline as `PLAN.md`: tests and build green, then the manual gate. Relief Mesh
 (Phases 0–8) is untouched by every phase here; the game is added beside it on the same hub.
 Design: `GAME-DESIGN.md` (rules), `GAME-CONTRACT.md` (data), `GAME-VISUAL.md` (look).
-Visual mock: open `docs/design/pralayam-mock.html` in a browser (big screen round + end, three phone screens).
+Visual mock: open `docs/design/pralayam-mock.html` in a browser (big screen round + end, three phone screens), or the
+design canvas at https://claude.ai/artifact/Aa7Qrj4PnwupwLE5RwQBSx (six artboards: lobby, round, first light, phone order,
+phone no-signal, phone result; private until shared from its Share menu).
 
 ## G0 — Design freeze ✅ (this commit)
 - Rules, contract, visual system, mock, this plan. Decisions D13–D20 added to `DECISIONS.md`.
