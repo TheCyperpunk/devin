@@ -9,7 +9,9 @@ const arg = (name: string, def: number) => {
   const v = i >= 0 ? Number(process.argv[i + 1]) : NaN;
   return Number.isFinite(v) ? v : def;
 };
-const bots = arg('bots', 3);
+// PowerShell drops the `--` after `npm run sim`, so a bare number also works: `npm run sim 5` = five bots.
+const bare = Number(process.argv[2]);
+const bots = arg('bots', Number.isInteger(bare) && !process.argv[2]!.startsWith('-') ? bare : 3);
 const seed = arg('seed', 7);
 const games = arg('games', 1);
 const random = games > 1 || process.argv.includes('--random');
