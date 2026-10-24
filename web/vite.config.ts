@@ -29,8 +29,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache the app shell only. /api/* must never be cached or served from the SW.
+        // Precache the volunteer app shell only. /api/* must never be cached or served from the SW.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // The dashboard runs on the hub laptop and must always come fresh from the hub: if the laptop's browser
+        // ever opened the volunteer page, this worker would otherwise keep serving an old dashboard from cache.
+        globIgnores: ['**/dashboard.html', '**/assets/dashboard-*', '**/assets/MapView-*'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/dashboard/],
         runtimeCaching: [],
