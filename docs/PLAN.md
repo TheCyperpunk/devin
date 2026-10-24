@@ -49,8 +49,10 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Built: `shared/src/contract.ts` (strict zod schemas), `server/src/{db,auth,routes,ws,hub}.ts`, `scripts/seed.ts` (12 fictional reports, `npm run seed`), `baseScore` early (Phase 3 adds the wait bonus, bands and sorting).
 - Known limitations: `GET /api/dashboard/export` and cloud sync are later phases (`cloud` status is always `not_configured`); sessions are never revoked early (24 h expiry, fine for a hub that restarts); the seed script writes straight to the database, so a running dashboard will not see seeded rows until it re-fetches.
 
-### Phase 3 — Urgency
+### Phase 3 — Urgency ✅ (24 scoring tests, mutation-checked)
 - `shared/urgency.ts`: `baseScore(input)`, `displayScore(report, hubNow)`, `band()`, `compareReports()`.
+- Built in `shared/src/urgency.ts`: `baseScore`, `waitBonus`, `displayScore`, `band`, `bandOf` (returns `'done'` for finished reports), `compareReports`, `sortReports`, `clockOffset`/`hubNow` (estimates hub time from `serverTime` so a wrong phone clock cannot distort waiting time).
+- Sort rule: not-done before done; then displayed score high to low; then older `reportedAt` first; then lower `revision`. Done reports use the same order among themselves.
 - **Gate:** unit tests cover: medical above food-only; rescue; group size cap at 30; wait bonus capped at 20; food/water +10 only when no medical/rescue/urgent; done sorted last; ties broken by older `reportedAt`.
 
 ### Phase 4 — Volunteer PWA

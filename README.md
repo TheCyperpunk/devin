@@ -2,7 +2,7 @@
 
 A local relief hub for flood response in Kochi. Volunteers report needs from their phones, and a coordinator triages them on a laptop. Everything runs over local Wi-Fi with no Internet. When the Internet returns, the hub backs up to the cloud.
 
-Status: **Phase 2 complete** — hub core: SQLite, pairing, coordinator login, reports API, WebSocket. Phone and dashboard screens come in Phases 4–6.
+Status: **Phase 3 complete** — hub core (SQLite, pairing, login, reports API, WebSocket) and urgency scoring. Phone and dashboard screens come in Phases 4–6.
 
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
 - [docs/CONTRACT.md](docs/CONTRACT.md) — data model, API, WebSocket, storage
@@ -29,7 +29,7 @@ npm start
 ### Layout
 
 ```
-shared/   constants (Phase 2: zod contract, urgency) — used by server and web
+shared/   constants, zod contract, urgency scoring — used by server and web
 server/   Express HTTPS hub on :3443, HTTP setup server on :8080
 web/      Vite + React PWA: index.html (volunteer), dashboard.html (coordinator)
 scripts/  make-certs.ts
