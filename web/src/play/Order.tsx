@@ -1,12 +1,12 @@
 // The crew's screen: where you are, what the radio suggests (one tap: Go), the whole ward to tap a place and go,
 // your route, and the single-move orders for fine control. Routes queue one move per round through the outbox.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GAME, KITS, type Boat, type GameView, type Order } from '@pralayam/shared';
 import { COLOR_PX } from '../game/sprites.js';
 import type { GameSync, GameSyncState } from '../lib/gameSync.js';
 import { useLang } from './lang.js';
 import { NODES, estimatedRound, legalOrders, nodeName, routeOrders, suggest, ward, type OrderOption } from './orders.js';
-import { PhoneMap } from './PhoneMap.js';
+import { WardMap } from '../screen/Map.js';
 import { useTick } from './useGame.js';
 
 const KIT_ICON = { water: '💧', food: '🍚', medical: '🩺' } as const;
@@ -35,6 +35,15 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const routePath = target ? ward.shortestPath(boat.nodeId, target) ?? [] : plan ? ward.shortestPath(boat.nodeId, plan.target) ?? [] : tip ? tip.path : [];
   const highlighted = target ?? plan?.target ?? tip?.nodeId ?? null;
   const here = view.boats.filter((b) => b.id !== boat.id && b.nodeId === boat.nodeId).map((b) => b.name);
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  // The map is drawn at twice the phone's width so sprites stay readable; keep the boat in the middle of the window.
+  useEffect(() => {
+    const box = mapRef.current;
+    const n = NODES[boat.nodeId];
+    if (!box || !n) return;
+    box.scrollTo({ left: Math.max(0, (n.x / 1000) * box.scrollWidth - box.clientWidth / 2), behavior: 'smooth' });
+  }, [boat.nodeId]);
 
   // A new round clears the selection; mere revision bumps (another crew's order, a heartbeat) must not.
   useEffect(() => {
@@ -186,7 +195,9 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
         )}
       </div>
 
-      <PhoneMap view={view} boat={boat} target={highlighted} path={routePath} dim={!contact} lang={lang} onPick={(id) => setTarget(id === boat.nodeId ? null : id)} />
+      <div className={'phonemap' + (!contact ? ' dim' : '')} ref={mapRef}>
+        <WardMap view={view} me={boat.id} target={highlighted} path={routePath} onPick={(id) => setTarget(id === boat.nodeId ? null : id)} compact />
+      </div>
       <p className="hint center">
         {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
         {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''} · {t('tapMap')}

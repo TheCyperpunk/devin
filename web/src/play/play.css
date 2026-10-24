@@ -72,7 +72,15 @@ p { margin: 0; line-height: 1.5; }
 .crews { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .crews li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 3px solid var(--p-grey); }
 .hull.small { width: 28px; height: 11px; }
-.phonemap { width: 100%; height: auto; display: block; border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 var(--px) var(--p-black); background: #1a2a4d; touch-action: manipulation; }
+.phonemap { width: 100%; overflow-x: auto; overflow-y: hidden; border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 var(--px) var(--p-black); background: #1a2a4d; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.phonemap::-webkit-scrollbar { display: none; }
+.phonemap .map { width: 200%; height: auto; display: block; }
+.phonemap .boat { transition: transform .8s steps(10), opacity .3s steps(3); }
+.phonemap .boat .bob { animation: bob 1s steps(1) infinite; }
+.phonemap .popText { animation: floatUp 2s steps(8) both; }
+.phonemap .waveA { animation: waveSwap 1.2s steps(1) infinite; }
+.phonemap .waveB { animation: waveSwapB 1.2s steps(1) infinite; }
+.phonemap .river.splash { animation: splash .6s steps(2) 2; }
 .phonemap.dim { opacity: .55; }
 .radio { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 14px; background: var(--p-black); border: var(--px) solid var(--p-yellow); box-shadow: 4px 4px 0 0 var(--p-black); }
 .radio .label { grid-column: 1 / -1; color: var(--p-yellow); }

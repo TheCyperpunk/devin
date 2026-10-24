@@ -91,7 +91,30 @@ export function popsFor(events: GameEvent[], key: number): Pop[] {
   return [...byNode].map(([nodeId, pts]) => ({ id: `${key}-${nodeId}`, nodeId, text: (pts > 0 ? '+' : '') + pts, tone: pts > 0 ? 'good' : 'bad' }));
 }
 
-export function WardMap({ view, dim, pops = [], outSince }: { view: GameView | null; dim?: boolean; pops?: Pop[]; outSince?: Record<string, number> }) {
+export interface WardMapProps {
+  view: GameView | null;
+  dim?: boolean;
+  pops?: Pop[];
+  outSince?: Record<string, number>;
+  /** The phone's own boat: framed in its colour and labelled YOU. */
+  me?: string;
+  /** Where that boat is heading, and the nodes on the way (drawn as a yellow route). */
+  target?: string | null;
+  path?: string[];
+  /** Tap a place (the phone): makes every node a target. */
+  onPick?: (nodeId: string) => void;
+  /** Phone size: bigger labels, only where they matter. */
+  compact?: boolean;
+}
+
+export function WardMap({ view, dim, pops = [], outSince, me, target = null, path = [], onPick, compact }: WardMapProps) {
+  const myBoat = me ? view?.boats.find((b) => b.id === me) : undefined;
+  const onRoute = (a: string, b: string) => {
+    const i = path.indexOf(a);
+    const j = path.indexOf(b);
+    const from = myBoat?.nodeId;
+    return (i >= 0 && j >= 0 && Math.abs(i - j) === 1) || (from !== undefined && path.length > 0 && ((a === from && b === path[0]) || (b === from && a === path[0])));
+  };
   const zones = useMemo(deadZones, []);
   const water = view?.waterLevel ?? 0;
   const e = useMemo(() => edges(water), [water]);
@@ -193,6 +216,15 @@ export function WardMap({ view, dim, pops = [], outSince }: { view: GameView | n
         ))}
       </g>
 
+      {/* the route the phone chose */}
+      {path.length > 0 && (
+        <g stroke={P.yellow} strokeWidth="8" strokeLinecap="square">
+          {thuruthu.edges.filter(([a, b]) => onRoute(a, b)).map(([a, b]) => (
+            <line key={'r' + a + b} x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} />
+          ))}
+        </g>
+      )}
+
       {/* palms */}
       {PALMS.map(([x, y, small]) => (
         <Sprite key={`${x}-${y}`} name={small ? 'palmSmall' : 'palm'} x={x} y={y} outline />
@@ -212,13 +244,22 @@ export function WardMap({ view, dim, pops = [], outSince }: { view: GameView | n
           const quiet = n.kind === 'house' && !hasCall && !flooded;
           const x = snap(n.x);
           const y = snap(n.y);
+          const mine = myBoat?.nodeId === n.id;
+          const isTarget = target === n.id;
+          const showLabel = !compact || mine || isTarget || hasCall || n.kind !== 'house';
           return (
-            <g key={n.id} opacity={quiet ? 0.9 : 1}>
+            <g key={n.id} data-node={n.id} opacity={quiet ? 0.9 : 1} onClick={onPick ? () => onPick(n.id) : undefined} style={onPick ? { cursor: 'pointer' } : undefined}>
+              {onPick && <rect x={x - 48} y={y - 64} width="96" height="110" fill="transparent" />}
+              {(mine || isTarget) && (
+                <rect x={x - 44} y={y - 54} width="88" height="80" fill="none" stroke={mine && myBoat ? COLOR_PX[myBoat.color] : P.yellow} strokeWidth="4" strokeDasharray={isTarget && !mine ? '8 6' : undefined} />
+              )}
               <Sprite name={spriteFor(n, flooded, hasCall)} x={x} y={y + 16} outline={n.kind !== 'junction'} />
-              <text x={x} y={y + 36} fill={quiet ? P.grey : flooded ? P.foam : P.white} stroke={P.black} strokeWidth="3" paintOrder="stroke">
-                {n.name.toUpperCase()}
-                {flooded ? ' ~' : n.safe ? ' ✦' : ''}
-              </text>
+              {showLabel && (
+                <text x={x} y={compact ? y + 40 : y + 36} fontSize={compact ? 22 : undefined} fill={mine ? P.yellow : quiet ? P.grey : flooded ? P.foam : P.white} stroke={P.black} strokeWidth="3" paintOrder="stroke">
+                  {n.name.toUpperCase()}
+                  {flooded ? ' ~' : n.safe ? ' ✦' : ''}
+                </text>
+              )}
             </g>
           );
         })}
@@ -266,8 +307,8 @@ export function WardMap({ view, dim, pops = [], outSince }: { view: GameView | n
                 {Array.from({ length: GAME.capacity }, (_, i) => (
                   <rect key={i} x={-14 + i * 8} y={-28} width="6" height="6" fill={i < b.passengers.length ? P.white : P.black} stroke={hex} strokeWidth="1" />
                 ))}
-                <text y="-34" fill={contact ? P.white : P.grey} stroke={P.black} strokeWidth="2" paintOrder="stroke">
-                  {initials(b.name)}
+                <text y="-34" fontSize={compact ? 11 : undefined} fill={me === b.id ? P.yellow : contact ? P.white : P.grey} stroke={P.black} strokeWidth="2" paintOrder="stroke">
+                  {me === b.id ? 'YOU' : initials(b.name)}
                   {contact ? '' : outSince?.[b.id] ? ` ✕ R${outSince[b.id]}` : ' ✕'}
                 </text>
                 {!contact && <Sprite name="radioOff" x={26} y={-26} />}
