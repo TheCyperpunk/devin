@@ -19,7 +19,7 @@ export const config = {
   coordinatorPasscode: process.env.COORDINATOR_PASSCODE ?? '',
   certsDir: path.join(repoRoot, 'certs'),
   webDist: path.join(repoRoot, 'web', 'dist'),
-  dataDir: path.join(repoRoot, 'server', 'data'),
+  dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(repoRoot, 'server', 'data'),
 };
 
 export const certPaths = {

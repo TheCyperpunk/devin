@@ -1,8 +1,9 @@
-// Volunteer app shell: loads settings from IndexedDB, then pairing screen or (New report | My reports).
+// Volunteer app shell: loads settings from IndexedDB, then pairing screen or (New report | My reports) with live sync.
 import { useCallback, useEffect, useState } from 'react';
 import { isLang, type Lang } from '@relief-mesh/shared';
-import { getSettings, outboxCount, setSettings, type Settings } from '../lib/db.js';
-import { useHubReachable } from '../lib/hooks.js';
+import type { PairResponse } from '../lib/api.js';
+import { getSettings, setSettings, type Settings } from '../lib/db.js';
+import { useSync, useSyncTriggers } from '../lib/useSync.js';
 import { LangProvider, LangToggle, useLang } from './lang.js';
 import { MyReports } from './MyReports.js';
 import { Pair } from './Pair.js';
@@ -32,27 +33,25 @@ export function App() {
     setLocal((s) => ({ ...s, ...patch }));
   }, []);
 
+  const reload = useCallback(async () => setLocal(await getSettings()), []);
+
   if (!settings) return <main className="splash">…</main>;
 
   return (
     <LangProvider lang={settings.lang ?? 'en'} setLang={(lang) => void update({ lang })}>
-      <Shell settings={settings} update={update} />
+      <Shell settings={settings} update={update} reload={reload} />
     </LangProvider>
   );
 }
 
-function Shell({ settings, update }: { settings: Settings; update: (p: Settings) => Promise<void> }) {
+function Shell({ settings, update, reload }: { settings: Settings; update: (p: Settings) => Promise<void>; reload: () => Promise<void> }) {
   const { t } = useLang();
-  const hub = useHubReachable();
+  const { state, sync } = useSync();
   const [tab, setTab] = useState<'new' | 'mine'>('new');
-  const [refresh, setRefresh] = useState(0);
-  const [unsent, setUnsent] = useState(0);
   const [persisted, setPersisted] = useState<boolean | null>(null);
-  const paired = Boolean(settings.deviceToken);
+  const paired = Boolean(settings.deviceToken) && !state.needsPairing;
 
-  useEffect(() => {
-    void outboxCount().then(setUnsent);
-  }, [refresh]);
+  useSyncTriggers(paired);
 
   // Browser storage is "best effort" unless the app asks to keep it (D8).
   useEffect(() => {
@@ -60,12 +59,19 @@ function Shell({ settings, update }: { settings: Settings; update: (p: Settings)
     void navigator.storage.persisted().then((p) => (p ? true : navigator.storage.persist())).then(setPersisted);
   }, [paired]);
 
+  async function onPaired(r: PairResponse) {
+    await sync.paired(r);
+    await reload();
+  }
+
+  const statusText = state.hub === 'unknown' ? '…' : state.hub === 'online' ? t('hubOnline') : t('hubOffline');
+
   return (
     <>
       <header className="top">
         <div>
           <h1 className="brand">{t('appName')}</h1>
-          {paired && settings.reporterName && <div className="who">{settings.reporterName}</div>}
+          {settings.reporterName && <div className="who">{settings.reporterName}</div>}
         </div>
         <LangToggle />
       </header>
@@ -73,15 +79,22 @@ function Shell({ settings, update }: { settings: Settings; update: (p: Settings)
       <main>
         {!paired ? (
           <>
-            <p className="muted tagline">{t('tagline')}</p>
-            <Pair settings={settings} onPaired={(p) => void update(p)} />
+            {state.needsPairing ? (
+              <p className="warn" role="alert">
+                {state.needsPairing === 'reset' ? t('pairAgainReset') : t('pairAgainToken')}
+              </p>
+            ) : (
+              <p className="muted tagline">{t('tagline')}</p>
+            )}
+            <Pair settings={settings} onPaired={onPaired} />
           </>
         ) : (
           <>
             <div className="status" aria-live="polite">
-              <span className={'dot ' + (hub === null ? '' : hub ? 'ok' : 'bad')} aria-hidden="true" />
-              {hub === null ? '…' : hub ? t('hubOnline') : t('hubOffline')}
-              {unsent > 0 && <span className="unsent">· {t('waitingToSend', { n: unsent })}</span>}
+              <span className={'dot ' + (state.hub === 'unknown' ? '' : state.hub === 'online' ? 'ok' : 'bad')} aria-hidden="true" />
+              {statusText}
+              {state.sending && <span className="unsent">· {t('sending')}</span>}
+              {!state.sending && state.unsent > 0 && <span className="unsent">· {t('waitingToSend', { n: state.unsent })}</span>}
             </div>
             {persisted === false && <p className="warn">{t('storageWarn')}</p>}
 
@@ -95,9 +108,9 @@ function Shell({ settings, update }: { settings: Settings; update: (p: Settings)
             </nav>
 
             {tab === 'new' ? (
-              <ReportForm onSaved={() => setRefresh((n) => n + 1)} onShowMine={() => setTab('mine')} />
+              <ReportForm onSaved={() => void sync.kick()} onShowMine={() => setTab('mine')} />
             ) : (
-              <MyReports refreshKey={refresh} />
+              <MyReports refreshKey={state.version} />
             )}
           </>
         )}

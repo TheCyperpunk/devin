@@ -65,12 +65,17 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Verified by `npm run e2e` (drives Edge/Chrome against the running hub): pairing from the QR link (code is removed from the address bar), wrong code error, service worker control, offline reload stays paired, offline submit, close + reopen keeps the report, GPS saved, no hub-owned fields stored, Malayalam, and no sideways scrolling at 320/360/390 px in both languages. Screenshots showed (and the check now prevents) a Malayalam layout overflow.
 - Known limitations: the 12 agreed Malayalam labels are as written in this plan, the other ~35 strings are first drafts needing a native-speaker check; `storage.persist()` is denied in the headless test browser (the "browser may delete reports" warning shows), so confirm it is granted on an installed phone app; there is no way to re-pair or change name yet (Phase 5/8); a report that fails local validation is refused on the form, not queued.
 
-### Phase 5 — Outbox sync and status
+### Phase 5 — Outbox sync and status ✅ (22 unit tests against a fake hub + real-browser run: 3 offline reports delivered 0.1 s after reconnect, exactly once)
 - `flushOutbox()`: health → batch ≤ 50 → handle per-item results (CONTRACT §4).
 - Triggers: after submit, health OK, WS `auth:ok`, `online`, `visibilitychange` → visible, and a 5 s timer while the outbox is not empty. Hub reachable → all entries due now (D8).
 - `hubId` change → pair again, re-send unsent reports.
 - WS client with REST catch-up and a 10 s polling fallback. "My reports" screen with chips: Saved on phone / Sent to hub / Assigned to NAME / Done / Rejected.
 - **Gate:** hub off, queue 3 reports → hub on, foreground the app → all 3 arrive exactly once within 10 s. Repeat with a hub restart in the middle of a batch.
+- Built: `web/src/lib/sync.ts` (SyncManager: flush = health → hub-reset check → send due in batches ≤50 → catch-up by cursor; WebSocket auth → catch-up → live pushes), `web/src/lib/api.ts`, outbox/merge/requeue operations in `db.ts`, `useSync.ts` (one manager, browser triggers: online, focus, visibilitychange), re-pair screen with a reason.
+- Rules that matter: the cursor advances **only** from catch-up pages, never from upload answers or pushes (tested: an assignment made between two of the phone's requests is never skipped). Only a *network* error marks the hub offline; a hub that answers with 5xx keeps the phone "online" and the reports back off 1 → 2 → 4 … 30 s. Reconnect makes everything due at once (D8). 401 → token cleared, "pair again". New `hubId` → every accepted report re-queued, cursor reset, "pair again (hub was reset)".
+- Verified by `npm run e2e` against a second throwaway hub (`HTTPS_PORT=3553 DATA_DIR=… node server/dist/index.js`): online submit → "Sent to hub"; offline ×3 → close/reopen → reconnect → 4 rows on the hub, no duplicates, a second reconnect adds nothing; assign/done pushed live over the socket; status survives a reload; no horizontal overflow in both languages.
+- Fixed on the way: a tap on a control that had just been scrolled into view landed under the sticky header (`scroll-margin-top` now keeps controls clear of it).
+- Known limitations: the hub-restart-mid-batch case is covered by unit tests (duplicate answers, pushes for already-stored reports), not by the browser run; Background Sync while the app is fully closed is not promised (D8); rejected reports show the hub's reason in English only.
 
 ### Phase 6 — Coordinator dashboard
 - Passcode login. Counters. Top-3 critical strip. Sorted list (primary view). Detail panel: assign, mark done, reopen, edit note.

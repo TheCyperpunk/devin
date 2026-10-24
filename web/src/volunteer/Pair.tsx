@@ -1,7 +1,7 @@
 // First-run screen: name + join code (prefilled from the QR link's ?join=) -> POST /api/pair -> device token.
 import { useEffect, useState, type FormEvent } from 'react';
 import { LIMITS } from '@relief-mesh/shared';
-import { ApiFail, pair } from '../lib/api.js';
+import { ApiFail, pair, type PairResponse } from '../lib/api.js';
 import type { Settings } from '../lib/db.js';
 import { useLang } from './lang.js';
 
@@ -9,7 +9,7 @@ function joinCodeFromUrl(): string {
   return (new URLSearchParams(location.search).get('join') ?? '').trim().toUpperCase();
 }
 
-export function Pair({ settings, onPaired }: { settings: Settings; onPaired: (patch: Settings) => void }) {
+export function Pair({ settings, onPaired }: { settings: Settings; onPaired: (r: PairResponse) => Promise<void> }) {
   const { t } = useLang();
   const [name, setName] = useState(settings.reporterName ?? '');
   const [code, setCode] = useState(joinCodeFromUrl);
@@ -32,7 +32,7 @@ export function Pair({ settings, onPaired }: { settings: Settings; onPaired: (pa
     setBusy(true);
     try {
       const r = await pair(cleanCode, settings.deviceId!, cleanName);
-      onPaired({ deviceToken: r.deviceToken, hubId: r.hubId, reporterName: r.reporterName });
+      await onPaired(r);
     } catch (err) {
       const c = err instanceof ApiFail ? err.code : 'internal';
       setError(c === 'bad_join_code' ? t('errBadCode') : c === 'network' ? t('errNoHub') : c === 'rate_limited' ? t('errTooMany') : t('errGeneric'));

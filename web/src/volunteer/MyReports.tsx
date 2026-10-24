@@ -33,6 +33,9 @@ export function MyReports({ refreshKey }: { refreshKey: number }) {
             {r.input.urgent ? ' · ' + t('urgent') : ''}
           </div>
           {r.input.note && <div className="note">{r.input.note}</div>}
+          {r.syncState === 'rejected' && r.rejectReason && (
+            <div className="error">{t('rejectedWhy', { reason: r.rejectReason })}</div>
+          )}
         </li>
       ))}
     </ul>

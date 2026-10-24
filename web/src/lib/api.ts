@@ -1,11 +1,13 @@
-// Calls to the hub. Phase 4 only needs pairing; the outbox sender arrives in Phase 5.
-import type { ApiErrorBody, ErrorCode } from '@relief-mesh/shared';
+// Calls to the hub. Every failure becomes an ApiFail with the contract's error code, or 'network' when unreachable.
+import type { ApiErrorBody, BatchItemResult, ErrorCode, PhoneReportInput, Report } from '@relief-mesh/shared';
 
 export class ApiFail extends Error {
-  /** `network` means the hub could not be reached at all (offline, wrong Wi-Fi, hub down). */
   constructor(
+    /** `network` means the hub could not be reached at all (offline, wrong Wi-Fi, hub down). */
     public code: ErrorCode | 'network',
     message: string,
+    /** Seconds to wait, from a 429's Retry-After header. */
+    public retryAfterS?: number,
   ) {
     super(message);
   }
@@ -18,15 +20,36 @@ export interface PairResponse {
   hubId: string;
 }
 
-export async function pair(joinCode: string, deviceId: string, reporterName: string, timeoutMs = 8000): Promise<PairResponse> {
+export interface HealthResponse {
+  ok: true;
+  time: number;
+  hubId: string;
+}
+
+export interface ReportsPage {
+  reports: Report[];
+  maxRevision: number;
+  hasMore: boolean;
+  serverTime: number;
+}
+
+async function request<T>(
+  method: string,
+  path: string,
+  opts: { token?: string; body?: unknown; timeoutMs?: number } = {},
+): Promise<T> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 10_000);
   let res: Response;
   try {
-    res = await fetch('/api/pair', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ joinCode, deviceId, reporterName }),
+    res = await fetch(path, {
+      method,
+      cache: 'no-store',
+      headers: {
+        ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}),
+        ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
+      },
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
       signal: ctrl.signal,
     });
   } catch {
@@ -34,9 +57,34 @@ export async function pair(joinCode: string, deviceId: string, reporterName: str
   } finally {
     clearTimeout(timer);
   }
-  const body = (await res.json().catch(() => null)) as (PairResponse & Partial<ApiErrorBody>) | null;
-  if (!res.ok) {
-    throw new ApiFail(body?.error?.code ?? 'internal', body?.error?.message ?? `HTTP ${res.status}`);
+  const text = await res.text();
+  let body: unknown = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = null;
   }
-  return body as PairResponse;
+  if (!res.ok) {
+    const err = (body as Partial<ApiErrorBody> | null)?.error;
+    const retry = Number(res.headers.get('retry-after'));
+    throw new ApiFail(err?.code ?? (res.status >= 500 ? 'internal' : 'invalid_body'), err?.message ?? `HTTP ${res.status}`, Number.isFinite(retry) && retry > 0 ? retry : undefined);
+  }
+  return body as T;
 }
+
+export const api = {
+  health: (timeoutMs = 2000) => request<HealthResponse>('GET', '/api/health', { timeoutMs }),
+
+  pair: (joinCode: string, deviceId: string, reporterName: string) =>
+    request<PairResponse>('POST', '/api/pair', { body: { joinCode, deviceId, reporterName }, timeoutMs: 8000 }),
+
+  sendBatch: (token: string, reports: PhoneReportInput[]) =>
+    request<{ results: BatchItemResult[] }>('POST', '/api/reports/batch', { token, body: { reports }, timeoutMs: 20_000 }),
+
+  myReports: (token: string, after: number) => request<ReportsPage>('GET', `/api/my-reports?after=${after}`, { token }),
+};
+
+export type Api = typeof api;
+
+/** Kept for the pairing screen, which predates `api`. */
+export const pair = api.pair;

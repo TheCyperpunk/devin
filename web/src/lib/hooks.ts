@@ -1,7 +1,6 @@
-// React hooks: GPS capture with a 5 s budget, and a periodic hub reachability check.
+// React hooks: GPS capture with a 5 s budget.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TIMING } from '@relief-mesh/shared';
-import { checkHub } from './status.js';
 import type { Position } from './report.js';
 
 export type LocationState =
@@ -57,23 +56,4 @@ export function useLocation(): { loc: LocationState; retry: () => void } {
   }, [start]);
 
   return { loc, retry: start };
-}
-
-/** true = hub answered /api/health recently. Phase 5 replaces this with the real sync status. */
-export function useHubReachable(everyMs = 5000): boolean | null {
-  const [ok, setOk] = useState<boolean | null>(null);
-  useEffect(() => {
-    let stop = false;
-    const ping = () =>
-      void checkHub().then((h) => {
-        if (!stop) setOk(h !== null);
-      });
-    ping();
-    const id = setInterval(ping, everyMs);
-    return () => {
-      stop = true;
-      clearInterval(id);
-    };
-  }, [everyMs]);
-  return ok;
 }

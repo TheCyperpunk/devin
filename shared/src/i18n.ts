@@ -68,6 +68,11 @@ const en = {
   // status line
   hubOnline: 'Hub connected',
   hubOffline: 'Hub not reachable',
+  sending: 'Sending…',
+  allSent: 'All reports sent',
+  pairAgainReset: 'The hub was restarted with a new database. Enter the join code again. Your saved reports will be sent again.',
+  pairAgainToken: 'This phone is no longer paired with the hub. Enter the join code again.',
+  rejectedWhy: 'The hub did not accept this report: {reason}',
   storageWarn: 'This browser may delete saved reports. Install the app and send reports soon.',
 } as const;
 
@@ -131,6 +136,11 @@ const ml: Record<StringKey, string> = {
 
   hubOnline: 'ഹബ് കണക്റ്റഡ്',
   hubOffline: 'ഹബ്ബിനെ ബന്ധപ്പെടാൻ കഴിയുന്നില്ല',
+  sending: 'അയയ്ക്കുന്നു…',
+  allSent: 'എല്ലാ റിപ്പോർട്ടുകളും അയച്ചു',
+  pairAgainReset: 'ഹബ് പുതിയ ഡാറ്റാബേസുമായി പുനരാരംഭിച്ചു. ജോയിൻ കോഡ് വീണ്ടും നൽകുക. സേവ് ചെയ്ത റിപ്പോർട്ടുകൾ വീണ്ടും അയയ്ക്കും.',
+  pairAgainToken: 'ഈ ഫോൺ ഇപ്പോൾ ഹബ്ബുമായി ബന്ധിപ്പിച്ചിട്ടില്ല. ജോയിൻ കോഡ് വീണ്ടും നൽകുക.',
+  rejectedWhy: 'ഹബ് ഈ റിപ്പോർട്ട് സ്വീകരിച്ചില്ല: {reason}',
   storageWarn: 'സേവ് ചെയ്ത റിപ്പോർട്ടുകൾ ബ്രൗസർ മായ്ച്ചേക്കാം. ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക, റിപ്പോർട്ടുകൾ വേഗം അയയ്ക്കുക.',
 };
 

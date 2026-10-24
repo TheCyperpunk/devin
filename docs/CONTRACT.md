@@ -99,6 +99,8 @@ sort     = status === 'done' last; otherwise score desc, then reportedAt asc
 
 When a `Report` arrives from REST or WS, store it only if its `revision` is greater than the local copy's. This makes REST catch-up and WS events safe to apply in any order.
 
+**Cursor rule (phones):** the `after` cursor used for `GET /api/my-reports` advances only to the `maxRevision` of a catch-up page that was fully applied. Never advance it from a `POST /api/reports[/batch]` answer or from a `report:upserted` push: those carry one report's revision, and a coordinator change with a lower revision may still be unfetched.
+
 ## 3. Authentication
 
 | Caller | How | Header |

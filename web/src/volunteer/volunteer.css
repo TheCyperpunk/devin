@@ -18,6 +18,8 @@ h2 { font-size: 1.1rem; margin: 0 0 12px; }
 button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #1a73e8; outline-offset: 2px; }
+/* When the browser scrolls a control into view, keep it clear of the sticky header. */
+main button, main input, main textarea, main [role=tab] { scroll-margin-top: 90px; }
 
 .splash { text-align: center; padding-top: 30vh; font-size: 2rem; color: var(--muted); }
 

@@ -2,7 +2,7 @@
 
 A local relief hub for flood response in Kochi. Volunteers report needs from their phones, and a coordinator triages them on a laptop. Everything runs over local Wi-Fi with no Internet. When the Internet returns, the hub backs up to the cloud.
 
-Status: **Phase 4 complete** — hub core, urgency scoring and the volunteer app (pair, report, save offline). Syncing to the hub is Phase 5; the dashboard is Phase 6.
+Status: **Phase 5 complete** — volunteers can pair, report offline, and reports reach the hub automatically on reconnect with live status back. The coordinator dashboard is Phase 6.
 
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
 - [docs/CONTRACT.md](docs/CONTRACT.md) — data model, API, WebSocket, storage
@@ -24,7 +24,7 @@ npm start
 - Hub (phones + dashboard): `https://<HUB_IP>:3443` — dashboard at `/dashboard.html`
 - Setup page for phones: `http://<HUB_IP>:8080` (download + trust the certificate, then open the hub)
 
-`npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through the offline flow against the running hub (needs Edge or Chrome). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
+`npm test` runs the tests (hub API + WebSocket + scoring). `npm run e2e` drives a real browser through pairing, offline reporting, reconnect delivery and live assignment against the running hub (needs Edge or Chrome; set `E2E_ORIGIN`/`E2E_DB` to point it at a second hub started with `HTTPS_PORT=3553 DATA_DIR=... node server/dist/index.js`). `npm run seed` loads 12 fictional practice reports. On start the hub prints a join code that phones need to pair. `npm run dev` runs Vite (HTTP, `:5173`, hot reload) next to the hub for laptop-only development; phones must use the HTTPS build.
 
 ### Layout
 
