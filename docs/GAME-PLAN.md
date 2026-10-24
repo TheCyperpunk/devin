@@ -11,7 +11,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Rules, contract, visual system, mock, this plan. Decisions D13–D20 added to `DECISIONS.md`.
 - **Gate:** the team reads `GAME-DESIGN.md` and can explain one round out loud without the doc.
 
-## G1 — Rules engine (pure, no I/O)
+## G1 — Rules engine (pure, no I/O) ✅ (33 tests; three bots play Thuruthu in 4 ms; rules tuned, see GAME-DESIGN §4-6)
 - `shared/src/game/contract.ts` — zod schemas for `Scenario`, `Order`, `OrdersEnvelope` (strict), types for
   `GameState`, `GameView`, `GameEvent`.
 - `shared/src/game/scenarios/thuruthu.json` + `scenario.ts` (load, validate, shortest paths, adjacency).
@@ -26,6 +26,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Tests (≥ 40): every edge case in GAME-DESIGN §8, scoring table, queue semantics, determinism (same seed → same
   history), bots finish with a sane score, 200 games never throw.
 - **Gate:** `npm run sim` output reads like a believable night; stars set from the bot baseline.
+- Done: files as listed (the scenario is `thuruthu.ts`, not JSON). Tuning from the simulator: people board on arrival, shelters count for unloading, roof countdown 3, lost −15, four houses raised out of the first flood, 34 people. Bots: 3 → 170 (23 saved, 8 lost), 4 → 238, 5 → 343 (31 saved); 200 random nights with 3 bots: median 34, 47% saved. `starBase = 170`.
 
 ## G2 — Hub
 - `server/src/db.ts` — table `game (id, state_json, updated_at)` + meta `game_revision`; `saveGame`, `loadGame`.

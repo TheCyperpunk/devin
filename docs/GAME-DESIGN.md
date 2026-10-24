@@ -25,7 +25,8 @@ the old first.
 ### 2.2 Water
 - `waterLevel` starts at 0 and rises by 1 after rounds 3, 5, 7 and 9 (so it reaches 4 by the end).
 - A house is **flooded** when `waterLevel >= height`. People still there climb to the roof and get a
-  `roofRounds` countdown of 2. When it reaches 0 they are **lost**.
+  `roofRounds` countdown of 3 (tuned in G1 from 2: with 2, even five bots lost a third of the ward). When it
+  reaches 0 they are **lost**.
 - The temple and school never flood (height 3 but a special `safe: true` flag). They can hold many people and are
   the natural staging posts.
 
@@ -35,7 +36,9 @@ the old first.
 (derived: water → water kit, food → food kit, medical → medical kit), `status: open | served | lost`.
 
 Urgency = `baseScore(call) + waitBonus(rounds waited) + waterBonus` where `baseScore` and `waitBonus` are the
-Relief Mesh functions with one game-minute = one round, and `waterBonus` = 25 if the house is flooded.
+Relief Mesh functions with one round = ten minutes of the night (+2 per round, capped at 20), and `waterBonus` = 25
+once the house is flooded. Priority seats: a call with children has `round(people / 3)` of them (at least 1), one
+with elderly or sick `round(people / 4)` (at least 1); they board first.
 Bands are the Relief Mesh bands (red ≥ 80, orange ≥ 50, yellow). The big screen colours calls by band.
 
 ### 2.4 Boats (one per phone, plus bots)
@@ -43,8 +46,10 @@ Bands are the Relief Mesh bands (red ≥ 80, orange ≥ 50, yellow). The big scr
 - `nodeId` (where it is), `passengers[]` (who is aboard, with their flags), `standingOrder: hold | return`.
 - `contact` = `nodes[boat.nodeId].signal` **and** the phone has talked to the hub in the last 20 s. Either one
   false shows the boat as "out of contact" on the big screen.
-- Bots: the hub adds bots so there are at least 3 boats. Bots are named after real 2018 rescue groups' boat
-  types ("Chellanam 1", "Vypin 2", "Kumbalangi 3").
+- Bots: the hub adds bots so there are at least 3 boats, named after coastal villages whose boats came in 2018
+  ("Chellanam 1", "Vypin 2", "Kumbalangi 3"). A bot delivers when full, when nothing is worth a detour or when the
+  night is nearly over; rescues or drops where it stands; otherwise heads for the best call by urgency over
+  distance, skipping calls that boats arriving first will empty (but never idles while a call is open).
 
 ## 3. A round (45 s by default)
 
@@ -63,27 +68,32 @@ open  ──45 s or all orders in──▶ resolve (≤ 5 s animation) ──▶
 
 Order types: `move(nodeId)`, `rescue`, `drop(kit)`, `return`, `hold`, `standing(mode)`.
 `standing` is not a round action: it sets `standingOrder` immediately and does not use the crew's turn.
+**People climb aboard as a boat arrives** (G1 tuning: a separate rescue round made every trip six rounds long), so
+`rescue` is only needed when a boat is already there, for example when a new call opens under it or a second boat
+takes the rest.
 
 `resolveRound` applies these steps in this exact order, every boat in `boats` array order (joined order), so the
 result never depends on network timing:
 
 1. **Pick the acting order** per boat: the head of its order queue (5.1); if none, its standing order
    (`hold` → do nothing, `return` → one step toward the nearest of camp/hospital along the shortest path).
-2. **Move.** `move(n)` succeeds if `n` is adjacent; else the event is `invalid` and the boat holds.
-   `return` moves one edge along the shortest path to the nearest unload point (camp, or hospital if any passenger
-   is elderly or sick), and unloads on arrival (step 5) in the same round.
+2. **Move.** `move(n)` succeeds if `n` is adjacent, then loads people there (step 3) in the same round; else the
+   event is `invalid` and the boat holds. `return` sets the boat's plan to "returning" and moves one edge along the
+   shortest path to the nearest place to unload: the camp, the hospital, or a shelter (temple, school; ties camp >
+   hospital > shelter). If anyone aboard needs the hospital it goes there instead when that is at most one step
+   farther. A returning boat keeps going round after round with no new order; any other order cancels the plan.
 3. **Rescue.** At a node with an open call: take `min(capacity − aboard, remaining)` people. Children and the
    elderly or sick board first (they carry the call's flags). If `remaining` hits 0 the call becomes `served`.
    No open call there → `invalid`.
 4. **Drop.** `drop(kit)` at a node whose open call needs that kit: kit consumed, need removed from the call,
    event `kit_matched` (+3). If the call does not need it: event `kit_wasted` (−2), kit still consumed. No kit
    left or no call → `invalid`.
-5. **Unload.** A boat at camp or hospital with passengers unloads all: each person `saved` (+10),
-   each child or elderly/sick `priority_saved` (+5), elderly/sick at the hospital `hospital_bonus` (+5).
-   At the camp, kits refill to 1 each.
-6. **Water.** If the round just finished is in `riseAfterRounds`, `waterLevel++`. Every house with
-   `height <= waterLevel` and an open call: if not yet flooded, set `roofRounds = 2` (event `flooded`); else
-   `roofRounds--`; at 0 all `remaining` people are `lost` (−20 each), call `lost`.
+5. **Unload.** A boat at the camp, the hospital or a shelter with passengers unloads all: each person `saved`
+   (+10), each child or elderly/sick `priority_saved` (+5), and at the hospital `hospital_bonus` (+5) for each
+   passenger who needed it (elderly/sick, or anyone from a medical call). Kits refill to 1 each at the camp only.
+6. **Water.** If the round just finished is in `riseAfterRounds`, `waterLevel++` (event `water_rose`). Every
+   house with `height <= waterLevel` and an open call: if not yet flooded, set `roofRounds = 3` (event
+   `flooded`); else `roofRounds--`; at 0 all `remaining` people are `lost` (−15 each), call `lost`.
 7. **New calls** for the next round from the scenario (fixed list) or from the generator (seeded `rng`).
 8. `round++`. If `round > rounds` the game ends: each passenger still aboard → `saved_late` (+5).
 
@@ -130,11 +140,12 @@ every phone goes to its outbox and comes back together.
 | elderly/sick unloaded at the hospital (per person) | +5 |
 | kit matched to a need | +3 |
 | kit wasted | −2 |
-| person lost to the water | −20 |
+| person lost to the water | −15 |
 | person still aboard at first light | +5 |
 
 Team score only (co-op). Stars: the bot-only simulation (G1) sets the thresholds: 1★ = bot score,
-2★ = bot × 1.3, 3★ = bot × 1.6, re-tuned after playtests.
+2★ = bot × 1.3, 3★ = bot × 1.6, re-tuned after playtests. Measured in G1 on Thuruthu (`npm run sim`): three bots
+score 170 (23 of 34 saved, 8 lost), four 238, five 343, so `starBase = 170` and a well-run five-boat night is 3★.
 
 End screen shows three numbers, each with one real line from 2018:
 - **Saved N of M** — "In 2018, fishermen's boats from the coast saved more people than any agency."

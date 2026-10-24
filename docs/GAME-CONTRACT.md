@@ -14,7 +14,7 @@ the hub owns every derived field, order by revision, the phone writes through th
 round resolved, host action) increments it. `GET /api/game/state?after=<rev>` returns `{ unchanged: true }` when
 nothing changed; phones and the screen keep the last full view.
 
-## 3. Scenario (JSON, in `shared/src/game/scenarios/thuruthu.json`)
+## 3. Scenario (`shared/src/game/scenarios/thuruthu.ts`, validated by `ScenarioSchema` + `parseScenario`)
 ```ts
 interface Scenario {
   id: string; name: string; nameMl: string;
@@ -50,6 +50,8 @@ interface GameState {
   boats: Boat[]; calls: Call[];
   queues: Record<string, QueuedOrder[]>;   // boatId -> unapplied orders sorted by seq
   applied: Record<string, number>;         // boatId -> highest applied seq
+  recent: Record<string, string[]>;        // boatId -> ids already taken (duplicate detection)
+  roundSeconds: number; botsEnabled: boolean; starBase: number;
   score: number; stars: 0 | 1 | 2 | 3;
   history: RoundResult[];                  // one per resolved round
   rng: number;                             // generator state, so a game can be replayed
@@ -60,13 +62,14 @@ interface Boat {
   nodeId: string; passengers: Passenger[];
   kits: { water: number; food: number; medical: number };
   standingOrder: 'hold' | 'return';
+  plan: 'return' | null;         // a return keeps going until the boat unloads
   lastHeardAt: number | null;    // hub clock; null for bots
   saved: number;                 // people this boat delivered (for the end screen)
 }
-interface Passenger { callId: string; child: boolean; elderlyOrSick: boolean; medical: boolean }
+interface Passenger { callId: string; priority: boolean; hospital: boolean }   // priority = child or elderly/sick seat
 interface Call {
   id: string; nodeId: string; appearedRound: number;
-  needs: NeedType[]; peopleCount: number; remaining: number;
+  needs: NeedType[]; peopleCount: number; remaining: number; priorityLeft: number;
   hasChildren: boolean; hasElderlyOrSick: boolean; urgent: boolean;
   kitsNeeded: ('water' | 'food' | 'medical')[];
   status: 'open' | 'served' | 'lost'; roofRounds: number | null;
@@ -78,13 +81,13 @@ type Order =
 interface RoundResult { round: number; events: GameEvent[]; scoreAfter: number; waterLevel: number }
 interface GameEvent {
   type: 'moved' | 'invalid' | 'rescued' | 'served' | 'kit_matched' | 'kit_wasted' | 'saved' | 'priority_saved'
-      | 'hospital_bonus' | 'refilled' | 'flooded' | 'lost' | 'call_opened' | 'saved_late' | 'standing_used';
+      | 'hospital_bonus' | 'refilled' | 'flooded' | 'lost' | 'call_opened' | 'saved_late' | 'standing_used' | 'water_rose';
   boatId?: string; callId?: string; nodeId?: string; fromNodeId?: string; count?: number; points: number;
 }
 ```
 
 ### 4.2 `GameView` (what phones and the screen receive)
-Everything in `GameState` except `queues`, `applied` and `rng`, plus:
+Everything in `GameState` except `queues`, `applied`, `recent` and `rng`, plus:
 ```ts
 interface GameView extends Omit<GameState, 'queues' | 'applied' | 'rng'> {
   revision: number; serverTime: number;
