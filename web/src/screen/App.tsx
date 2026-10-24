@@ -52,7 +52,7 @@ export function App() {
       <TopBar view={view} hubNow={hubNow} hub={state.hub} />
       <main className="stage">
         <div className="mapWrap">
-          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} pops={pops} outSince={state.outSince} />
+          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} pops={pops} outSince={state.outSince} fit="screen" />
           <Toasts toasts={state.toasts} />
           {state.notice && <div className="notice">{state.notice}</div>}
         </div>

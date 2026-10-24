@@ -41,15 +41,24 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   // The map is drawn wider than the phone so sprites stay readable; keep the boat's place in the middle of the window.
   useEffect(() => {
     const box = mapRef.current;
-    const el = box?.querySelector<SVGGElement>(`[data-node="${boat.nodeId}"]`);
-    if (!box || !el) return;
-    const b = box.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    box.scrollTo({
-      left: Math.max(0, box.scrollLeft + (r.left + r.width / 2 - b.left) - box.clientWidth / 2),
-      top: Math.max(0, box.scrollTop + (r.top + r.height / 2 - b.top) - box.clientHeight / 2),
-      behavior: 'smooth',
-    });
+    const svg = box?.querySelector<SVGSVGElement>('svg.map');
+    if (!box || !svg) return;
+    const centre = () => {
+      const el = box.querySelector<SVGGElement>(`[data-node="${boat.nodeId}"]`);
+      if (!el) return;
+      const b = box.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      box.scrollTo({
+        left: Math.max(0, box.scrollLeft + (r.left + r.width / 2 - b.left) - box.clientWidth / 2),
+        top: Math.max(0, box.scrollTop + (r.top + r.height / 2 - b.top) - box.clientHeight / 2),
+        behavior: 'smooth',
+      });
+    };
+    centre();
+    // the map picks its pixel-perfect size after mount and on rotation: follow it
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(centre) : null;
+    ro?.observe(svg);
+    return () => ro?.disconnect();
   }, [boat.nodeId]);
 
   // A new round clears the selection; mere revision bumps (another crew's order, a heartbeat) must not.
@@ -131,6 +140,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
             setSheet(false);
           }}
           compact
+          fit="phone"
         />
       </div>
 

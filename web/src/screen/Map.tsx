@@ -1,11 +1,11 @@
-// The ward as a pixel tile world (GAME-VISUAL section 0, second pass): land with dithered soil and palms, a river
-// channel with banks that widens as the water rises, black sprite outlines, lit-window halos, idle bob on boats,
-// diagonal rain with the odd lightning flash, and floating score pops. Everything is rects on a 4-unit grid.
-import { useMemo } from 'react';
+// The ward as a pixel tile world (GAME-VISUAL §0, third pass): sprites lit from the upper-left, lamps that fall off in
+// dithered rings (called houses, safe places, every boat's lantern), people on flooded roofs, y-sorted sprites, two
+// depths of rain, no translucent pixels, and integer scaling so nothing shimmers. Everything is rects on a 4-unit grid.
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GAME, thuruthu, type GameEvent, type GameView, type ScenarioNode } from '@pralayam/shared';
 import { NODES, initials } from './format.js';
 import { STEP, channelPath, edges } from '../game/river.js';
-import { COLOR_PX, P, PX, SPRITES, snap, spriteRects, type SpriteName } from '../game/sprites.js';
+import { COLOR_PX, LAND, P, PX, SPRITES, light, mix, shade, snap, spriteRects, type SpriteName } from '../game/sprites.js';
 
 /** Coconut palms on the banks, placed by hand so none sits on a house, a path or the water. */
 const PALMS: [number, number, boolean][] = [
@@ -15,6 +15,20 @@ const PALMS: [number, number, boolean][] = [
   [-70, 120, false], [-110, 330, true], [-50, 560, false], [-160, 460, true], [1070, 140, false], [1110, 380, true], [1060, 590, false], [1170, 250, true],
   [120, -40, true], [520, -60, false], [880, -30, true], [300, 660, false], [700, 650, true], [1000, 680, false],
 ];
+
+// Solid dither colours: every "translucent" look is a real palette mix, so no pixel is ever semi-transparent.
+const LAMP = {
+  yellow: { a: mix(LAND, P.yellow, 0.14), b: mix(LAND, P.yellow, 0.3) },
+  white: { a: mix(LAND, P.foam, 0.14), b: mix(LAND, P.foam, 0.3) },
+} as const;
+type LampTone = keyof typeof LAMP;
+const ROAD = mix(LAND, P.black, 0.5);
+const RAIN_NEAR = mix(LAND, P.foam, 0.4);
+const RAIN_FAR = mix(LAND, P.foam, 0.2);
+const DEAD = mix(LAND, P.grey, 0.25);
+const PADDY = '#1d3a2a';
+const PADDY_ROW = mix(PADDY, '#2f9e7b', 0.5);
+const WATER_MID = mix(P.water1, P.water2, 0.5);
 
 /** Dead-zone clusters (connected nodes without signal) and where to write their label. */
 function deadZones(): { nodes: ScenarioNode[]; label: string; x: number; y: number; paddy: boolean }[] {
@@ -58,6 +72,24 @@ function Sprite({ name, x, y, override, className, outline }: { name: SpriteName
   );
 }
 
+/** A lamp on the ground: light that falls off in three rings, solid → 50 % dither → 25 % dither, into the night. */
+function Lamp({ x, y, w, h, tone = 'yellow' }: { x: number; y: number; w: number; h: number; tone?: LampTone }) {
+  // each ring is a cross of two rects, so the pool has cut corners and reads as light rather than a box
+  const ring = (grow: number, fill: string) => (
+    <>
+      <rect x={x - w / 2 - grow} y={y - h / 2 - grow / 2} width={w + grow * 2} height={h + grow} fill={fill} />
+      <rect x={x - w / 2 - grow / 2} y={y - h / 2 - grow} width={w + grow} height={h + grow * 2} fill={fill} />
+    </>
+  );
+  return (
+    <g className="lamp">
+      {ring(32, `url(#lamp-${tone}-out)`)}
+      {ring(16, `url(#lamp-${tone}-mid)`)}
+      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} fill={LAMP[tone].b} />
+    </g>
+  );
+}
+
 function spriteFor(n: ScenarioNode, flooded: boolean, hasCall: boolean): SpriteName {
   switch (n.kind) {
     case 'camp':
@@ -91,6 +123,38 @@ export function popsFor(events: GameEvent[], key: number): Pop[] {
   return [...byNode].map(([nodeId, pts]) => ({ id: `${key}-${nodeId}`, nodeId, text: (pts > 0 ? '+' : '') + pts, tone: pts > 0 ? 'good' : 'bad' }));
 }
 
+/**
+ * Pixel-perfect sizing. 'screen': the largest scale at which one 4-unit pixel is a whole number of device pixels,
+ * windowboxed in the parent (the land tile fills the gutters). 'phone': one map unit per CSS pixel, snapped the same
+ * way, with extra height below so the pan box can centre the boat.
+ */
+function useFit(ref: React.RefObject<SVGSVGElement>, mode: 'screen' | 'phone' | undefined) {
+  const [style, setStyle] = useState<React.CSSProperties | undefined>(undefined);
+  useEffect(() => {
+    const box = ref.current?.parentElement;
+    if (!mode || !box || typeof ResizeObserver === 'undefined') return;
+    const dpr = window.devicePixelRatio || 1;
+    const snapScale = (s: number) => Math.max(0.25, Math.floor(s * PX * dpr) / (PX * dpr));
+    const fit = () => {
+      const W = box.clientWidth, H = box.clientHeight;
+      if (!W || !H) return;
+      if (mode === 'phone') {
+        const s = snapScale(1);
+        setStyle({ width: Math.round(1000 * s), height: Math.max(Math.round(600 * s), Math.round(H * 1.4)) });
+        return;
+      }
+      const s = snapScale(Math.min(W / 1000, H / 600));
+      const w = Math.round(1000 * s), h = Math.round(600 * s);
+      setStyle({ position: 'absolute', left: Math.floor((W - w) / 2), top: Math.floor((H - h) / 2), width: w, height: h });
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, [mode, ref]);
+  return style;
+}
+
 export interface WardMapProps {
   view: GameView | null;
   dim?: boolean;
@@ -105,9 +169,13 @@ export interface WardMapProps {
   onPick?: (nodeId: string) => void;
   /** Phone size: bigger labels, only where they matter. */
   compact?: boolean;
+  /** Integer pixel scaling for the surface (see useFit). */
+  fit?: 'screen' | 'phone';
 }
 
-export function WardMap({ view, dim, pops = [], outSince, me, target = null, path = [], onPick, compact }: WardMapProps) {
+export function WardMap({ view, dim, pops = [], outSince, me, target = null, path = [], onPick, compact, fit }: WardMapProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const sized = useFit(svgRef, fit);
   const myBoat = me ? view?.boats.find((b) => b.id === me) : undefined;
   const onRoute = (a: string, b: string) => {
     const i = path.indexOf(a);
@@ -116,6 +184,8 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
     return (i >= 0 && j >= 0 && Math.abs(i - j) === 1) || (from !== undefined && path.length > 0 && ((a === from && b === path[0]) || (b === from && a === path[0])));
   };
   const zones = useMemo(deadZones, []);
+  // y-sorted so a southern sprite overlaps its northern neighbour, like a tile engine
+  const ordered = useMemo(() => [...thuruthu.nodes].sort((a, b) => a.y - b.y), []);
   const water = view?.waterLevel ?? 0;
   const e = useMemo(() => edges(water), [water]);
   const channel = useMemo(() => channelPath(e), [e]);
@@ -125,6 +195,8 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
 
   return (
     <svg
+      ref={svgRef}
+      style={sized}
       className={'map' + (dim ? ' dim' : '')}
       viewBox="0 0 1000 600"
       preserveAspectRatio="xMidYMid meet"
@@ -135,29 +207,41 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
     >
       <defs>
         <pattern id="land" width="32" height="32" patternUnits="userSpaceOnUse">
-          <rect width="32" height="32" fill="#1a2a4d" />
+          <rect width="32" height="32" fill={LAND} />
           <rect x="4" y="8" width="4" height="4" fill="#27407a" />
           <rect x="20" y="20" width="4" height="4" fill="#27407a" />
           <rect x="12" y="24" width="8" height="2" fill="#2d6b57" />
           <rect x="24" y="4" width="4" height="2" fill="#2d6b57" />
         </pattern>
+        {/* ordered 50 % dither between two neighbours on the water ramp */}
         <pattern id="deep" width="8" height="8" patternUnits="userSpaceOnUse">
-          <rect width="4" height="4" fill="#1e6f94" />
-          <rect x="4" y="4" width="4" height="4" fill="#1e6f94" />
+          <rect width="4" height="4" fill={P.water1} />
+          <rect x="4" y="4" width="4" height="4" fill={P.water1} />
         </pattern>
         <pattern id="checker" width="8" height="8" patternUnits="userSpaceOnUse">
-          <rect width="4" height="4" fill={P.grey} opacity=".22" />
-          <rect x="4" y="4" width="4" height="4" fill={P.grey} opacity=".22" />
+          <rect width="4" height="4" fill={DEAD} />
+          <rect x="4" y="4" width="4" height="4" fill={DEAD} />
         </pattern>
         <pattern id="paddy" width="16" height="8" patternUnits="userSpaceOnUse">
-          <rect width="16" height="8" fill="#1d3a2a" />
-          <rect y="2" width="16" height="2" fill="#2f9e7b" opacity=".5" />
-          <rect y="6" width="16" height="2" fill="#2f9e7b" opacity=".3" />
+          <rect width="16" height="8" fill={PADDY} />
+          <rect y="2" width="16" height="2" fill={PADDY_ROW} />
+          <rect y="6" width="16" height="2" fill={mix(PADDY, PADDY_ROW, 0.5)} />
         </pattern>
-        <pattern id="halo" width="8" height="8" patternUnits="userSpaceOnUse">
-          <rect width="4" height="4" fill={P.yellow} opacity=".18" />
-          <rect x="4" y="4" width="4" height="4" fill={P.yellow} opacity=".18" />
-        </pattern>
+        {(Object.keys(LAMP) as LampTone[]).map((tone) => (
+          <g key={tone}>
+            <pattern id={`lamp-${tone}-mid`} width="8" height="8" patternUnits="userSpaceOnUse">
+              <rect width="8" height="8" fill={LAMP[tone].a} />
+              <rect width="4" height="4" fill={LAMP[tone].b} />
+              <rect x="4" y="4" width="4" height="4" fill={LAMP[tone].b} />
+            </pattern>
+            <pattern id={`lamp-${tone}-out`} width="8" height="8" patternUnits="userSpaceOnUse">
+              <rect width="4" height="4" fill={LAMP[tone].a} />
+            </pattern>
+          </g>
+        ))}
+        <clipPath id="channel">
+          <path d={channel} />
+        </clipPath>
         <filter id="outline" x="-30%" y="-30%" width="160%" height="160%">
           <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="d" />
           <feFlood floodColor={P.black} />
@@ -176,19 +260,29 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
         z.nodes.map((n) => <rect key={n.id} x={snap(n.x) - 60} y={snap(n.y) - 60} width="120" height="120" fill={z.paddy ? 'url(#paddy)' : 'url(#checker)'} />),
       )}
 
-      {/* river channel: widens upward with the level; foam on the edges, dither in the deep */}
+      {/* lamps on the ground: safe places always, called houses while someone waits */}
+      {thuruthu.nodes.map((n) => {
+        const safe = n.kind === 'camp' || n.kind === 'hospital' || n.safe;
+        const call = callAt.has(n.id);
+        if (!safe && !call) return null;
+        const small = n.kind === 'camp' || n.kind === 'hospital' || n.kind === 'jetty';
+        return <Lamp key={n.id} x={snap(n.x)} y={snap(n.y) - (small ? 4 : 6)} w={small ? 64 : 72} h={small ? 44 : 60} tone={n.kind === 'hospital' ? 'white' : 'yellow'} />;
+      })}
+
+      {/* river channel: widens upward with the level; a lighter shelf and a foam line inside the edge, dither in the deep */}
       <g key={water} className="river splash">
-        <path d={channel} fill="#2a8fb8" />
-        <path d={channel} fill="url(#deep)" opacity=".7" />
-        <path d={channel} fill="none" stroke={P.foam} strokeWidth="2" opacity=".8" />
+        <path d={channel} fill={WATER_MID} />
+        <path d={channel} fill="url(#deep)" />
+        <path d={channel} fill="none" stroke={P.water2} strokeWidth="24" clipPath="url(#channel)" />
+        <path d={channel} fill="none" stroke={P.foam} strokeWidth="4" clipPath="url(#channel)" />
         <g className="waveA">
           {e.map((p, i) => (
-            <rect key={p.x} x={p.x + (i % 2 ? 8 : 0)} y={p.top + 4} width="8" height="2" fill={P.foam} opacity=".7" />
+            <rect key={p.x} x={p.x + (i % 2 ? 8 : 0)} y={p.top + 8} width="8" height="4" fill={P.foam} />
           ))}
         </g>
         <g className="waveB">
           {e.map((p, i) => (
-            <rect key={p.x} x={p.x + (i % 2 ? 0 : 8)} y={p.top + 8} width="8" height="2" fill={P.foam} opacity=".5" />
+            <rect key={p.x} x={p.x + (i % 2 ? 0 : 8)} y={p.top + 16} width="8" height="4" fill={P.foam} />
           ))}
         </g>
       </g>
@@ -197,7 +291,7 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
       {zones.map((z) => (
         <g key={z.label}>
           {z.nodes.map((n) => (
-            <rect key={n.id} x={snap(n.x) - 60} y={snap(n.y) - 60} width="120" height="120" fill="none" stroke={P.grey} strokeWidth="2" strokeDasharray="8 8" opacity=".6" />
+            <rect key={n.id} x={snap(n.x) - 60} y={snap(n.y) - 60} width="120" height="120" fill="none" stroke={P.grey} strokeWidth="2" strokeDasharray="8 8" />
           ))}
           <rect x={z.x - (z.label.length + 12) * 5 - 8} y={z.y - 13} width={(z.label.length + 12) * 10 + 16} height="20" fill={P.black} stroke={P.grey} strokeWidth="2" />
           <text x={z.x} y={z.y + 1} textAnchor="middle" fill={P.grey} fontFamily="'Press Start 2P', monospace" fontSize="10">
@@ -210,8 +304,8 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
       <g strokeLinecap="square">
         {thuruthu.edges.map(([a, b]) => (
           <g key={a + b}>
-            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke={P.black} strokeWidth="6" opacity=".5" />
-            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke="#b7874a" strokeWidth="2" strokeDasharray="8 4" opacity=".95" />
+            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke={ROAD} strokeWidth="6" />
+            <line x1={snap(NODES[a]!.x)} y1={snap(NODES[a]!.y)} x2={snap(NODES[b]!.x)} y2={snap(NODES[b]!.y)} stroke="#b7874a" strokeWidth="2" strokeDasharray="8 4" />
           </g>
         ))}
       </g>
@@ -230,30 +324,32 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
         <Sprite key={`${x}-${y}`} name={small ? 'palmSmall' : 'palm'} x={x} y={y} outline />
       ))}
 
-      {/* lit-window halos under houses with people calling */}
-      {openCalls.map((c) => {
-        const n = NODES[c.nodeId]!;
-        return <rect key={c.id} x={snap(n.x) - 40} y={snap(n.y) - 36} width="80" height="56" fill="url(#halo)" />;
-      })}
-
-      {/* nodes */}
+      {/* nodes, south over north */}
       <g fontFamily="'Pixelify Sans', sans-serif" fontSize="15" fontWeight="600" fill={P.white} textAnchor="middle">
-        {thuruthu.nodes.map((n) => {
+        {ordered.map((n) => {
           const flooded = n.kind === 'house' && !n.safe && water >= n.height;
-          const hasCall = callAt.has(n.id);
+          const call = callAt.get(n.id);
+          const hasCall = call !== undefined;
           const quiet = n.kind === 'house' && !hasCall && !flooded;
           const x = snap(n.x);
           const y = snap(n.y);
           const mine = myBoat?.nodeId === n.id;
           const isTarget = target === n.id;
           const showLabel = !compact || mine || isTarget || hasCall || n.kind !== 'house';
+          const onRoof = flooded && call?.roofRounds !== null && call?.roofRounds !== undefined && call.remaining > 0;
           return (
-            <g key={n.id} data-node={n.id} opacity={quiet ? 0.9 : 1} onClick={onPick ? () => onPick(n.id) : undefined} style={onPick ? { cursor: 'pointer' } : undefined}>
+            <g key={n.id} data-node={n.id} onClick={onPick ? () => onPick(n.id) : undefined} style={onPick ? { cursor: 'pointer' } : undefined}>
               {onPick && <rect x={x - 48} y={y - 64} width="96" height="110" fill="transparent" />}
               {(mine || isTarget) && (
                 <rect x={x - 44} y={y - 54} width="88" height="80" fill="none" stroke={mine && myBoat ? COLOR_PX[myBoat.color] : P.yellow} strokeWidth="4" strokeDasharray={isTarget && !mine ? '8 6' : undefined} />
               )}
               <Sprite name={spriteFor(n, flooded, hasCall)} x={x} y={y + 16} outline={n.kind !== 'junction'} />
+              {onRoof && (
+                <>
+                  <Sprite name="person" x={x - 12} y={y - 4} outline />
+                  <Sprite name="child" x={x + 8} y={y - 8} outline />
+                </>
+              )}
               {showLabel && (
                 <text x={x} y={compact ? y + 40 : y + 36} fontSize={compact ? 22 : undefined} fill={mine ? P.yellow : quiet ? P.grey : flooded ? P.foam : P.white} stroke={P.black} strokeWidth="3" paintOrder="stroke">
                   {n.name.toUpperCase()}
@@ -275,7 +371,7 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
           const color = band === 'red' ? P.red : band === 'orange' ? P.orange : P.yellow;
           return (
             <g key={c.id} className={'call' + (band === 'red' ? ' blink' : '')} data-band={band}>
-              <rect x={x - 18} y={y - 18} width="40" height="40" fill={P.black} opacity=".6" />
+              <rect x={x - 16} y={y - 16} width="40" height="40" fill={P.black} />
               <rect x={x - 20} y={y - 20} width="40" height="40" fill={P.black} stroke={color} strokeWidth="4" />
               <text x={x} y={y + 6} fontSize="14" fill={P.white}>
                 {c.remaining > 0 ? c.remaining : '✓'}
@@ -290,28 +386,33 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
         })}
       </g>
 
-      {/* boats: stepped slide between nodes, idle bob while waiting */}
+      {/* boats: stepped slide between nodes, a lantern on the mast, idle bob with the crew lagging a frame behind */}
       <g fontFamily="'Press Start 2P', monospace" fontSize="8" textAnchor="middle">
         {(view?.boats ?? []).map((b) => {
           const n = NODES[b.nodeId] ?? NODES[thuruthu.startNodeId]!;
           const k = boatsAt.get(b.nodeId) ?? 0;
           boatsAt.set(b.nodeId, k + 1);
-          const x = snap(n.x) + 48 + k * 10;
-          const y = snap(n.y) + 4 - k * 18;
+          const x = snap(n.x) + 48 + k * 12;
+          const y = snap(n.y) + 4 - k * 20;
           const contact = view?.contact[b.id] ?? true;
           const hex = COLOR_PX[b.color];
+          const ramp = { C: hex, L: light(hex), c: shade(hex) };
           return (
             <g key={b.id} className={'boat' + (contact ? '' : ' off')} data-boat={b.id} style={{ transform: `translate(${x}px, ${y}px)` }}>
               <g className="bob">
-                <Sprite name="boat" x={0} y={0} override={{ C: hex }} outline />
+                <rect x={-14} y={-38} width="24" height="24" fill="url(#lamp-yellow-mid)" />
+                <rect x={-10} y={-34} width="16" height="16" fill={LAMP.yellow.b} />
+                <Sprite name="boat" x={0} y={0} override={ramp} outline />
+              </g>
+              <g className="bob late">
                 {Array.from({ length: GAME.capacity }, (_, i) => (
-                  <rect key={i} x={-14 + i * 8} y={-28} width="6" height="6" fill={i < b.passengers.length ? P.white : P.black} stroke={hex} strokeWidth="1" />
+                  <rect key={i} x={-14 + i * 8} y={-44} width="6" height="6" fill={i < b.passengers.length ? P.white : P.black} stroke={hex} strokeWidth="1" />
                 ))}
-                <text y="-34" fontSize={compact ? 11 : undefined} fill={me === b.id ? P.yellow : contact ? P.white : P.grey} stroke={P.black} strokeWidth="2" paintOrder="stroke">
+                <text y="-50" fontSize={compact ? 11 : undefined} fill={me === b.id ? P.yellow : contact ? P.white : P.grey} stroke={P.black} strokeWidth="2" paintOrder="stroke">
                   {me === b.id ? 'YOU' : initials(b.name)}
                   {contact ? '' : outSince?.[b.id] ? ` ✕ R${outSince[b.id]}` : ' ✕'}
                 </text>
-                {!contact && <Sprite name="radioOff" x={26} y={-26} />}
+                {!contact && <Sprite name="radioOff" x={30} y={-40} />}
               </g>
             </g>
           );
@@ -331,8 +432,13 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
         })}
       </g>
 
-      {/* weather */}
-      <g className="rain" stroke={P.foam} strokeWidth="2" opacity=".22">
+      {/* weather: a far sheet of rain and a near one, for depth */}
+      <g className="rain far" stroke={RAIN_FAR} strokeWidth="2">
+        {[70, 190, 300, 410, 520, 640, 750, 860, 960].map((x, i) => (
+          <line key={x} x1={x} y1={-i * 16} x2={x - 2} y2={6 - i * 16} />
+        ))}
+      </g>
+      <g className="rain" stroke={RAIN_NEAR} strokeWidth="2">
         {[30, 120, 240, 330, 470, 560, 690, 790, 910, 985].map((x, i) => (
           <line key={x} x1={x} y1={-i * 14} x2={x - 4} y2={10 - i * 14} />
         ))}

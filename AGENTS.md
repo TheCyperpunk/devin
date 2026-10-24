@@ -13,7 +13,7 @@ Read before any task: `docs/GAME-DESIGN.md`, `docs/GAME-CONTRACT.md`, `docs/GAME
 - Phone writes go through the IndexedDB outbox (G4). Never POST from a button handler. Orders are idempotent by id.
 - Identity comes from the bearer token, never from IDs in the request body.
 - The look is the pixel edition (GAME-VISUAL §0): 16-colour palette, Press Start 2P + Pixelify Sans, sprites from
-  `web/src/screen/sprites.ts`, square boxes with hard shadows, `steps()` motion. No gradients, blur, rounded corners
+  `web/src/game/sprites.ts`, square boxes with hard shadows, `steps()` motion. No gradients, blur, rounded corners
   or eased animation in the game.
 - Never log request bodies or names. Never put secrets in `VITE_*` variables or the web bundle.
 - Never commit `certs/`, `.env`, or `server/data/`.

@@ -47,6 +47,33 @@ two frames, rain falls diagonally, lightning flashes every ~23 s. (5) Feedback w
 the water level is a four-segment bar. Roads are a dark bed with a dashed wood crown. The lobby logo is three-layer
 (yellow, orange step, black drop).
 
+**Third pass: craft rules from the pixel-art guides (2026-10-25).** We read the 2D-art skill guides on
+awesomeskill.ai and gameskill.dev (the Aseprite draw/shade/outline/animate rules, the "pixel art as code" lighting
+model, the Unity pixel-perfect notes) and applied the rules that fit a night flood on a projector:
+
+1. *One light, upper-left, on every sprite.* Each material now has a base, one shadow step and one light step
+   (`shade()` and `light()` in `web/src/game/sprites.ts`). Ramps are hue-shifted: shadows move toward blue-purple
+   and lose saturation, lights move toward yellow and gain it; "just darker" is never used. Roofs catch light on the
+   left slope, walls shade on the right, a shadow row sits under every eave and every base.
+2. *Lamps are the hero of a night.* Light falls off in three rings, solid → 50 % ordered dither → 25 % dither, into
+   the ambient land colour; rings are crosses, not boxes, so the pool has cut corners. Called houses glow while someone
+   waits, safe places glow all night (hospital in white), and every boat carries a lantern on its mast with its own
+   small pool, so crews read in the dark. People stand on a flooded roof while the call still has roof rounds left.
+3. *No semi-transparent pixels.* Roads, dead-zone checkers, paddy rows, rain, water dither and lamp rings are all solid
+   palette mixes (`mix()`), as the guides' validators demand. Dither only sits between neighbours on a ramp.
+4. *Water as a ramp.* Deep water is a 50 % dither of water-1 over the mid tone, a lighter water-2 shelf runs inside
+   the bank, then the foam line; foam ticks swap on two frames.
+5. *Integer scaling.* The map picks the largest scale at which one 4-unit pixel is a whole number of device pixels
+   and windowboxes in its frame (the land tile fills the gutters); the phone draws at one unit per CSS pixel, snapped
+   the same way. Nothing shimmers.
+6. *Idle is not a metronome.* The boat bob is four whole-pixel frames with 150/100/100/150 holds; the crew marks and
+   label lag one frame behind the hull (secondary motion). Lightning has an anticipation flicker before the strike.
+7. *Depth.* Sprites are y-sorted so a southern house overlaps its northern neighbour; rain falls in two sheets, a
+   slower dim one far away and a faster bright one in front.
+
+The sprite sheet is validated by `web/src/game/sprites.test.ts`: no ragged rows, no glyph without a colour, ramps
+that darken and cool or lighten and warm.
+
 **Motion.** Stepped only: `steps(n)` on every transition and keyframe; blink at 0.8 s; "▶ PRESS START" blinks in the
 lobby. `prefers-reduced-motion` stops all of it.
 

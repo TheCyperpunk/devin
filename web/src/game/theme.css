@@ -14,7 +14,7 @@
   --ink: var(--p-white); --ink-2: #c9cfdb; --ink-3: var(--p-grey);
   --font-ui: 'Pixelify Sans', 'Noto Sans Malayalam', monospace;
   --font-display: 'Press Start 2P', 'Pixelify Sans', monospace;
-  --px: 4px;
+  --px: 4px; --p-land: #1a2a4d;
 }
 html[lang='ml'] body { font-family: 'Noto Sans Malayalam', var(--font-ui); }
 html, body { height: 100%; }
@@ -69,16 +69,21 @@ a { color: var(--p-yellow); }
 @keyframes rain { from { transform: translateY(-140px); } to { transform: translateY(1300px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pop { 0% { transform: scale(.8); } 100% { transform: scale(1); } }
-@keyframes bob { 0%, 49% { transform: translateY(0); } 50%, 100% { transform: translateY(-2px); } }
+/* idle: four whole-pixel frames with uneven holds (150/100/100/150), so it reads as water, not a metronome */
+@keyframes bob { 0%, 29% { transform: translateY(0); } 30%, 49% { transform: translateY(-4px); } 50%, 69% { transform: translateY(-8px); } 70%, 100% { transform: translateY(-4px); } }
 @keyframes waveSwap { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @keyframes waveSwapB { 0%, 49% { opacity: 0; } 50%, 100% { opacity: 1; } }
 @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
-@keyframes lightning { 0%, 94% { opacity: 0; } 95% { opacity: .22; } 96% { opacity: 0; } 97% { opacity: .12; } 98%, 100% { opacity: 0; } }
+/* lightning: a faint anticipation flicker, the strike, then a weaker echo */
+@keyframes lightning { 0%, 93% { opacity: 0; } 93.4% { opacity: .06; } 93.8%, 94.6% { opacity: 0; } 95% { opacity: .22; } 96% { opacity: 0; } 97% { opacity: .12; } 98%, 100% { opacity: 0; } }
 @keyframes splash { 0%, 100% { filter: none; } 50% { filter: brightness(1.6); } }
 .wave { animation: drift 1.2s steps(4) infinite; }
 .blink { animation: blink .8s steps(1) infinite; }
 .blinkText { animation: blinkText 1s steps(1) infinite; }
 .rain { animation: rain 1.4s steps(14) infinite; }
+.rain.far { animation-duration: 2.4s; }
+/* secondary motion lands one frame after the primary */
+.bob.late { animation-delay: .18s; }
 .rise { animation: rise .2s steps(3) both; }
 .pop { animation: pop .3s steps(3) both; }
 @media (prefers-reduced-motion: reduce) {
