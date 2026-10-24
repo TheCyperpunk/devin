@@ -168,6 +168,15 @@ try {
   ok(await waitText(phone, 'Hub connected'), 'phone: still paired after the code changed');
   await dash.screenshot({ path: path.join(shots, '6-join.png') });
 
+  // ---- export: the header button exists and the endpoint returns a real SQLite file
+  ok(await dash.$('[data-testid=export]') !== null, 'export: "Export DB" button in the header');
+  const exp = await dash.evaluate(async () => {
+    const r = await fetch('/api/dashboard/export', { headers: { authorization: 'Bearer ' + sessionStorage.getItem('relief-mesh.session') } });
+    const buf = new Uint8Array(await r.arrayBuffer());
+    return { status: r.status, size: buf.length, magic: String.fromCharCode(...buf.slice(0, 15)), name: r.headers.get('content-disposition') };
+  });
+  ok(exp.status === 200 && exp.magic === 'SQLite format 3' && exp.size > 4096, `export: SQLite file downloaded (${exp.size} bytes, ${exp.name})`);
+
   // ---- reload keeps the session and the data; logout clears it
   await dash.reload({ waitUntil: 'networkidle0' });
   ok(await waitText(dash, 'Reports (2)'), 'reload: still logged in with both reports');

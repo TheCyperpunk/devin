@@ -14,6 +14,7 @@ export function ReportForm({ onSaved, onShowMine }: { onSaved: () => void; onSho
   const [form, setForm] = useState<FormState>(() => emptyForm());
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false); // for the button label only
   const busy = useRef(false); // a ref, not state, so a fast double tap cannot slip in before a re-render
 
   const patch = (p: Partial<FormState>) => {
@@ -29,6 +30,7 @@ export function ReportForm({ onSaved, onShowMine }: { onSaved: () => void; onSho
     const built = buildLocalReport({ ...form, position: loc.position }, crypto.randomUUID(), Date.now());
     if (!built.ok) return setError(built.error === 'needs' ? t('errPickNeed') : t('errGeneric'));
     busy.current = true;
+    setSaving(true);
     try {
       await saveNewReport(built.local);
       setForm(emptyForm());
@@ -38,6 +40,7 @@ export function ReportForm({ onSaved, onShowMine }: { onSaved: () => void; onSho
       setError(t('errGeneric'));
     } finally {
       busy.current = false;
+      setSaving(false);
     }
   }
 
@@ -130,8 +133,8 @@ export function ReportForm({ onSaved, onShowMine }: { onSaved: () => void; onSho
           {error}
         </p>
       )}
-      <button type="button" className="btn primary big" onClick={submit} data-testid="submit">
-        {t('submit')}
+      <button type="button" className="btn primary big" onClick={submit} disabled={saving} data-testid="submit">
+        {saving ? t('saving') : t('submit')}
       </button>
     </div>
   );

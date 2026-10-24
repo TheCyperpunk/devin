@@ -223,6 +223,19 @@ describe('failures and retry', () => {
     expect(await outboxCount()).toBe(0);
   });
 
+  it('retryNow() sends a backed-off report at once, even while the hub counts as online', async () => {
+    await saveNewReport(local(1, 1));
+    hub.fail = 'internal';
+    await flush(); // backed off 1 s
+    hub.fail = null;
+    await flush();
+    expect(hub.calls.batch).toHaveLength(1); // still waiting for nextTryAt
+    await sync.retryNow();
+    expect(hub.calls.batch).toHaveLength(2);
+    expect(await outboxCount()).toBe(0);
+    expect(sync.state.unsent).toBe(0);
+  });
+
   it('a report that is not yet due is not sent', async () => {
     await saveNewReport(local(1, 1));
     hub.fail = 'internal';

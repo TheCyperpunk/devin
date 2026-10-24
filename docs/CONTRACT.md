@@ -173,7 +173,7 @@ Only this device's reports, ordered by `revision` ascending, at most 500 per pag
 **`GET /api/dashboard/join`** → `200 { joinUrl, joinCode, qrDataUrl }`
 **`POST /api/dashboard/join/rotate`** → same shape, with a new code. Already-paired devices are unaffected.
 
-**`GET /api/dashboard/export`** → SQLite backup file (`application/octet-stream`). Phase 8.
+**`GET /api/dashboard/export`** → the whole hub database as one SQLite file (`application/octet-stream`, `Content-Disposition: attachment; filename="relief-hub-YYYYMMDD-HHMM.db"`). A consistent snapshot via SQLite's backup API, safe while the hub is running. Opens in any SQLite tool; copied to `server/data/hub.db` on a spare laptop it becomes that hub's database (same hubId, so paired phones keep working).
 
 ## 6. WebSocket `/ws`
 

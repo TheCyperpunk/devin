@@ -95,6 +95,11 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
               {statusText}
               {state.sending && <span className="unsent">· {t('sending')}</span>}
               {!state.sending && state.unsent > 0 && <span className="unsent">· {t('waitingToSend', { n: state.unsent })}</span>}
+              {!state.sending && (state.hub === 'offline' || state.unsent > 0) && (
+                <button type="button" className="retry" onClick={() => void sync.retryNow()} data-testid="retry">
+                  {t('retryNow')}
+                </button>
+              )}
             </div>
             {persisted === false && <p className="warn">{t('storageWarn')}</p>}
 

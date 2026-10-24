@@ -2,7 +2,7 @@
 :root {
   --green: #0b6e4f; --green-dark: #08523b; --green-bg: #e6f4ee;
   --red: #b00020; --red-bg: #fdecef;
-  --orange: #c25e00; --orange-bg: #fff1e6;
+  --orange: #c25e00; --orange-bg: #fff1e6; --orange-ink: #9a4a00; /* ink: text on orange-bg at 4.5:1+ */
   --yellow: #b8860b; --yellow-bg: #fff8e1;
   --grey: #6b7280; --grey-bg: #eef0f2;
   --blue: #0b3d91; --blue-bg: #e8f0fe;
@@ -23,7 +23,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 .btn.primary { background: var(--green); color: #fff; }
 .btn.done { border-color: var(--grey); color: #333; }
 .btn:disabled { opacity: .5; cursor: default; }
-.link { background: none; border: 0; color: #0b57d0; text-decoration: underline; min-height: 40px; padding: 0 8px; font-weight: 600; }
+.link { background: none; border: 0; color: #0b57d0; text-decoration: underline; min-height: 44px; padding: 0 8px; font-weight: 600; }
+.link:disabled { opacity: .6; cursor: default; }
+.export { display: flex; align-items: center; gap: 4px; }
+.exportmsg { font-size: .85rem; color: #d6eee4; }
 .error { color: var(--red); background: var(--red-bg); border-radius: 10px; padding: 10px 12px; margin: 8px 0; font-weight: 600; }
 .notice { background: var(--yellow-bg); color: #5c4300; border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
 .notice.bad { background: var(--red-bg); color: var(--red); }
@@ -47,7 +50,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 .dot { width: 12px; height: 12px; border-radius: 50%; background: #c7ced4; }
 .dot.ok { background: #7ee2b8; } .dot.warn { background: #ffd166; } .dot.bad { background: #ff8a95; }
 .cloud { padding: 6px 20px; font-size: .9rem; background: var(--grey-bg); color: var(--muted); }
-.cloud.offline { background: var(--orange-bg); color: var(--orange); }
+.cloud.offline { background: var(--orange-bg); color: var(--orange-ink); }
 .cloud.syncing { background: var(--blue-bg); color: var(--blue); }
 .cloud.synced { background: var(--green-bg); color: var(--green-dark); }
 .tabs { display: flex; gap: 6px; padding: 10px 20px 0; border-bottom: 1px solid var(--line); background: #fff; }
@@ -86,7 +89,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 .s-assigned { background: var(--blue-bg); color: var(--blue); }
 .s-done { background: var(--grey-bg); color: #333; }
 .row.band-red .stripe { background: var(--red); } .row.band-red .score { color: var(--red); }
-.row.band-orange .stripe { background: var(--orange); } .row.band-orange .score { color: var(--orange); }
+.row.band-orange .stripe { background: var(--orange); } .row.band-orange .score { color: var(--orange-ink); }
 .row.band-yellow .stripe { background: var(--yellow); } .row.band-yellow .score { color: #8a6500; }
 .row.band-done { opacity: .62; }
 .row.new { animation: flash 4s ease-out 1; }

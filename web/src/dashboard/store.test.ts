@@ -36,7 +36,7 @@ class FakeHub {
   pageSize = 500;
   fail: 'network' | 'unauthorized' | 'rate_limited' | null = null;
   cloud: CloudStatus = { state: 'not_configured' };
-  calls = { reports: [] as number[], patch: [] as [string, PatchReport][], login: [] as string[], join: 0, rotate: 0 };
+  calls = { reports: [] as number[], patch: [] as [string, PatchReport][], login: [] as string[], join: 0, rotate: 0, export: [] as string[] };
   page(after: number): ReportsPage {
     const all = this.reports.filter((r) => r.revision > after).sort((a, b) => a.revision - b.revision);
     const reports = all.slice(0, this.pageSize);
@@ -71,6 +71,10 @@ class FakeHub {
       },
       join: async () => (this.calls.join++, { joinUrl: 'https://hub/?join=ABC', joinCode: 'ABC', qrDataUrl: 'data:image/png;base64,x' }),
       rotateJoin: async () => (this.calls.rotate++, { joinUrl: 'https://hub/?join=DEF', joinCode: 'DEF', qrDataUrl: 'data:image/png;base64,y' }),
+      exportDb: async (t) => {
+        this.calls.export.push(t);
+        return { blob: new Blob(['SQLite format 3']), filename: 'relief-hub-20261025-1200.db' };
+      },
     };
   }
 }
@@ -284,6 +288,9 @@ describe('actions', () => {
     expect((await store.join()).joinCode).toBe('ABC');
     expect((await store.rotateJoin()).joinCode).toBe('DEF');
     expect(hub.calls).toMatchObject({ join: 1, rotate: 1 });
+    const exp = await store.exportDb();
+    expect(exp.filename).toBe('relief-hub-20261025-1200.db');
+    expect(hub.calls.export).toEqual([store.state.session]);
   });
 });
 

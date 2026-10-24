@@ -233,6 +233,9 @@ export class DashboardStore {
   rotateJoin(): Promise<JoinInfo> {
     return this.env.api.rotateJoin(this.state.session ?? '');
   }
+  exportDb(): Promise<{ blob: Blob; filename: string }> {
+    return this.env.api.exportDb(this.state.session ?? '');
+  }
 
   // ---------------- socket ----------------
 

@@ -297,6 +297,14 @@ export class SyncManager {
     this.socketBackoff = Math.min(this.socketBackoff * 2, TIMING.backoffMaxMs);
   }
 
+  /** The volunteer pressed Retry: forget every backoff and try the hub right now. */
+  async retryNow(): Promise<void> {
+    if (this.stopped) return;
+    await makeAllDue();
+    this.wake();
+    await this.kick();
+  }
+
   /** Reconnect right away (app came to the foreground, network came back). */
   wake(): void {
     if (this.stopped) return;

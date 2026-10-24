@@ -16,7 +16,7 @@ export function MyReports({ refreshKey }: { refreshKey: number }) {
     };
   }, [refreshKey]);
 
-  if (items === null) return null;
+  if (items === null) return <p className="muted center">{t('loading')}</p>;
   if (items.length === 0) return <p className="muted center">{t('noReports')}</p>;
 
   const now = Date.now();

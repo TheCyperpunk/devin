@@ -1,6 +1,6 @@
 // Phase 2 gate: runs the real hub (in-memory SQLite) over HTTP and WebSocket and checks the contract's rules.
 import http from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -585,5 +585,37 @@ describe('websocket', () => {
     await quiet();
     expect(s.msgs.filter((m) => m.type === 'report:upserted')).toHaveLength(0);
     s.ws.close();
+  });
+});
+
+describe('export (Phase 8)', () => {
+  it('needs a coordinator session', async () => {
+    expect((await call('GET', '/api/dashboard/export')).status).toBe(401);
+    const a = await pair('A');
+    expect((await call('GET', '/api/dashboard/export', { token: a.token })).status).toBe(403);
+  });
+
+  it('downloads a SQLite file that opens as the same hub with the same reports', async () => {
+    const a = await pair('A');
+    const r = report({ note: 'tank empty' });
+    await call('POST', '/api/reports', { token: a.token, body: r });
+    const token = await login();
+    const res = await fetch(env.base + '/api/dashboard/export', { headers: { authorization: `Bearer ${token}` } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('application/octet-stream');
+    expect(res.headers.get('content-disposition')).toMatch(/^attachment; filename="relief-hub-\d{8}-\d{4}\.db"$/);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    const bytes = Buffer.from(await res.arrayBuffer());
+    expect(bytes.subarray(0, 15).toString()).toBe('SQLite format 3');
+
+    const dir = mkdtempSync(path.join(tmpdir(), 'relief-export-test-'));
+    const file = path.join(dir, 'copy.db');
+    writeFileSync(file, bytes);
+    const copy = new HubDb(file);
+    expect(copy.hubId).toBe(env.db.hubId);
+    expect(copy.joinCode).toBe(env.db.joinCode);
+    expect(copy.reportsAfter(0, 10).reports.map((x) => [x.id, x.note])).toEqual([[r.id, 'tank empty']]);
+    copy.close();
+    rmSync(dir, { recursive: true, force: true });
   });
 });

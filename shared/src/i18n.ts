@@ -34,6 +34,8 @@ const en = {
   locRetry: 'Try again',
   savedOnPhone: 'Saved on phone',
   savedHelp: 'It is sent to the hub when you are connected.',
+  saving: 'Saving…',
+  loading: 'Loading…',
 
   // report status
   sentToHub: 'Sent to hub',
@@ -69,6 +71,7 @@ const en = {
   hubOnline: 'Hub connected',
   hubOffline: 'Hub not reachable',
   sending: 'Sending…',
+  retryNow: 'Retry now',
   allSent: 'All reports sent',
   pairAgainReset: 'The hub was restarted with a new database. Enter the join code again. Your saved reports will be sent again.',
   pairAgainToken: 'This phone is no longer paired with the hub. Enter the join code again.',
@@ -106,6 +109,8 @@ const ml: Record<StringKey, string> = {
   locRetry: 'വീണ്ടും ശ്രമിക്കുക',
   savedOnPhone: 'ഫോണിൽ സേവ് ചെയ്തു',
   savedHelp: 'കണക്റ്റ് ചെയ്യുമ്പോൾ ഹബ്ബിലേക്ക് അയയ്ക്കും.',
+  saving: 'സേവ് ചെയ്യുന്നു…',
+  loading: 'ലോഡ് ചെയ്യുന്നു…',
 
   sentToHub: 'ഹബ്ബിലേക്ക് അയച്ചു',
   assignedTo: '{name}-ന് നൽകി',
@@ -137,6 +142,7 @@ const ml: Record<StringKey, string> = {
   hubOnline: 'ഹബ് കണക്റ്റഡ്',
   hubOffline: 'ഹബ്ബിനെ ബന്ധപ്പെടാൻ കഴിയുന്നില്ല',
   sending: 'അയയ്ക്കുന്നു…',
+  retryNow: 'വീണ്ടും ശ്രമിക്കുക',
   allSent: 'എല്ലാ റിപ്പോർട്ടുകളും അയച്ചു',
   pairAgainReset: 'ഹബ് പുതിയ ഡാറ്റാബേസുമായി പുനരാരംഭിച്ചു. ജോയിൻ കോഡ് വീണ്ടും നൽകുക. സേവ് ചെയ്ത റിപ്പോർട്ടുകൾ വീണ്ടും അയയ്ക്കും.',
   pairAgainToken: 'ഈ ഫോൺ ഇപ്പോൾ ഹബ്ബുമായി ബന്ധിപ്പിച്ചിട്ടില്ല. ജോയിൻ കോഡ് വീണ്ടും നൽകുക.',

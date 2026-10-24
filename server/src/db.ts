@@ -135,6 +135,11 @@ export class HubDb {
     this.db.close();
   }
 
+  /** Copy the whole database to `file` as one consistent snapshot (SQLite backup API, safe while in use). */
+  backupTo(file: string): Promise<void> {
+    return this.db.backup(file).then(() => undefined);
+  }
+
   // ---- meta ----
   private getMeta(key: string): string | undefined {
     const row = this.db.prepare('select value from meta where key = ?').get(key) as { value: string } | undefined;

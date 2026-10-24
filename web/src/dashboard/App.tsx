@@ -1,11 +1,13 @@
 // Coordinator dashboard shell: login, header with counters + connection + cloud, tabs (Reports | Map | Join).
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { hubNow as hubClock, sortReports, type CloudStatus } from '@relief-mesh/shared';
+import { ApiFail } from '../lib/api.js';
 import { Detail } from './Detail.js';
 import { JoinPanel } from './JoinPanel.js';
 import { Login } from './Login.js';
 import { ReportList } from './ReportList.js';
 import { clock } from './format.js';
+import type { DashboardStore } from './store.js';
 import { useClock, useDashboard } from './useStore.js';
 
 // The map (and Leaflet) is only downloaded when the tab is opened, so the list never depends on it (D9).
@@ -69,6 +71,7 @@ export function App() {
           <span className={'dot ' + (state.hub === 'online' ? (state.socket ? 'ok' : 'warn') : state.hub === 'offline' ? 'bad' : '')} aria-hidden="true" />
           {state.hub === 'unknown' ? 'Connecting…' : state.hub === 'offline' ? 'Hub not reachable' : state.socket ? 'Live' : 'Polling'}
         </div>
+        <ExportButton store={store} />
         <button type="button" className="link" onClick={() => store.logout()}>
           Log out
         </button>
@@ -102,6 +105,44 @@ export function App() {
         {selected && tab !== 'join' && <Detail report={selected} hubNow={hubNow} store={store} onClose={() => setSelectedId(null)} />}
       </main>
     </div>
+  );
+}
+
+/** Downloads the whole hub database as a .db file (CONTRACT section 5, "export"). */
+function ExportButton({ store }: { store: DashboardStore }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function run() {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const { blob, filename } = await store.exportDb();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      setMsg(`Saved ${filename}`);
+    } catch (err) {
+      setMsg(err instanceof ApiFail && err.code === 'network' ? 'Cannot reach the hub.' : 'Export failed. Try again.');
+    }
+    setBusy(false);
+  }
+
+  return (
+    <span className="export">
+      <button type="button" className="link" onClick={run} disabled={busy} data-testid="export">
+        {busy ? 'Exporting…' : 'Export DB'}
+      </button>
+      {msg && (
+        <span className="exportmsg" role="status">
+          {msg}
+        </span>
+      )}
+    </span>
   );
 }
 

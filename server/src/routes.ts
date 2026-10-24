@@ -1,5 +1,8 @@
 // REST endpoints (CONTRACT section 5). Identity always comes from the bearer token, never from the body.
 import { Router, type Request, type Response } from 'express';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import {
@@ -169,7 +172,32 @@ export function createRoutes(ctx: RoutesContext): Router {
     joinBody().then((b) => res.json(b), next);
   });
 
+  // The whole database as a file (Phase 8): a snapshot via SQLite's backup API, written to a temp dir and
+  // deleted once sent. Lets a coordinator move to a spare laptop or keep a copy with no Internet at all.
+  r.get('/dashboard/export', coordinator, (_req, res, next) => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'relief-export-'));
+    const file = path.join(dir, 'hub.db');
+    const cleanup = () => rmSync(dir, { recursive: true, force: true });
+    db.backupTo(file).then(
+      () => {
+        res.type('application/octet-stream');
+        res.download(file, `relief-hub-${stamp(now())}.db`, { cacheControl: false }, cleanup);
+      },
+      (err: unknown) => {
+        cleanup();
+        next(err);
+      },
+    );
+  });
+
   return r;
+}
+
+/** Local time as YYYYMMDD-HHMM for the export filename. */
+function stamp(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
 }
 
 function listBody(page: { reports: { revision: number }[]; hasMore: boolean }, after: number, serverTime: number) {

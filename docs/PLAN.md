@@ -96,10 +96,11 @@ DECISIONS.md, CONTRACT.md, this plan, AGENTS.md, `.env.example`, `.gitignore`.
 - Setup (one-time, by the team): Supabase project → SQL editor → run CONTRACT section 9 → copy Project URL and a secret (`sb_secret_…` or legacy `service_role`) key into `.env` → restart the hub. The hub prints `[cloud] backup to <host> every 10 s`.
 - Live gate (2026-10-25, project `devin` in ap-south-1, RLS on with no policies): hub started `synced 2`; `PATCH` assign → cloud row at the new revision after the next pass; `PATCH` back to open → re-pushed again; a second hub pointed at an unreachable host with one new report → `{"state":"offline","pending":1}` and `[cloud] ping failed: fetch failed` in the log; `npm run check:bundle` → clean. Remaining manual check for the demo: flip the laptop's Internet off/on and watch the dashboard header change.
 
-### Phase 8 — Hardening
+### Phase 8 — Hardening ✅ built (152 unit tests, both browser runs green; the teammate gate below is still to be done by hand)
 - Error/empty/loading states, Retry button, double-submit guard, 48 px targets, contrast check, small-screen check.
 - Dashboard "Export DB" (CONTRACT §5). No request bodies in logs.
 - **Gate:** a non-technical teammate pairs and submits with no help.
+- Built: `GET /api/dashboard/export` (SQLite backup API snapshot → temp file → `attachment; filename="relief-hub-YYYYMMDD-HHMM.db"`, deleted after sending; coordinator only; 2 hub tests prove the file opens as the same hub with the same reports) and an **Export DB** button in the dashboard header. Phone: **Retry now** button whenever the hub is unreachable or reports are waiting (`SyncManager.retryNow()` forgets every backoff first, 1 test); "Loading…" in My reports; Submit shows "Saving…" and is disabled while the report is written (the ref guard against double taps stays); language toggle raised to 48 px. Dashboard: orange text darkened to `--orange-ink` (3.9:1 → 5.7:1), header links 44 px. Every text/background pair in both stylesheets is now ≥ 4.5:1 (checked by script). Phone layout re-checked at 320/360/390 px in both languages; dashboard at 1366/1024/768/390 px. Log review: the hub prints only the URL, hub id, join code, cloud host and error messages, never a body, name, note or coordinate.
 
 ### Phase 9 — Integration run
 Run on the real network and phones: three phones paired → online reports → Internet off → offline reports → hub restart → reconnect → exactly-once check → assign/done reaches only the owning phone → Internet on → cloud synced → dashboard used without the map.
