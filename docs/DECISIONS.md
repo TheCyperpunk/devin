@@ -152,3 +152,16 @@ Each phase ends with: a commit, passing tests, the manual check from its gate, a
 2. Will any iPhone be a demo phone, or Android only?
 3. How many hours are left in the hackathon? If under ~20, move Phase 7 (cloud) and the Export DB button to stretch.
 4. Who owns which phases? (Suggested: hub = 2, 3, 7; phone = 4, 5; dashboard = 6.)
+
+## Game decisions (Pralayam, Track 3 + 4) — 2026-10-25
+
+| # | Decision | Why |
+|---|---|---|
+| D13 | The game is a module on the same hub, repo and database as Relief Mesh. Relief Mesh code is not changed by game phases. | One demo story ("the same hub runs the tool and the game"); the tool stays a finished fallback. |
+| D14 | The map is an inline SVG of a fictional ward. No map tiles, no remote URL at runtime, fonts self-hosted. | The game must be fully playable with no Internet; tiles are the one thing Relief Mesh could not promise offline. |
+| D15 | Orders are the game's reports: phone → IndexedDB `gameOutbox` → `POST /api/game/orders`, idempotent by id, with per-boat `seq` queue semantics (GAME-DESIGN §5.1). | Reuses the proven exactly-once path; lets a player line up orders while out of contact. |
+| D16 | Dead zones are real: a boat in one gets no updates and its phone is expected to be offline in the demo. The boat follows a standing order meanwhile. | Makes the Track 3 constraint a game mechanic instead of a failure case. |
+| D17 | Round resolution is one pure, deterministic function with a seeded RNG; scenarios are JSON. | Unit-testable in milliseconds; replayable for the demo video; bots can tune the rules before any UI exists. |
+| D18 | Co-operative, team score only, three stars tuned from the bot baseline. | A room of strangers should not compete; the fantasy is a ward working together. |
+| D19 | One dark "monsoon night" design system for the big screen and the phone (GAME-VISUAL.md); sound is synthesized with WebAudio, no audio files. | Premium feel on a projector and an old phone with zero assets to download. |
+| D20 | Host controls live on the big screen page and use the coordinator session; crews use the device token from the Relief Mesh pairing. | No new auth; the join QR is the same one. |

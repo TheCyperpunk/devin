@@ -14,3 +14,8 @@ Read before any task: `docs/DECISIONS.md`, `docs/CONTRACT.md`, `docs/PLAN.md`.
 - Never commit `certs/`, `.env`, or `server/data/`.
 - TypeScript strict. Keep files small, with one short comment at the top of each file saying what it does.
 - After each task, run `npm test` and `npm run build`, then report: files changed, commands to run, and the manual gate steps.
+
+## Game (Pralayam) tasks
+Read `docs/GAME-DESIGN.md`, `docs/GAME-CONTRACT.md`, `docs/GAME-VISUAL.md`, `docs/GAME-PLAN.md` too. Implement one G-phase per
+session. Never change Relief Mesh behaviour in a game phase. Game logic goes in `shared/src/game/` as pure functions
+with tests; the hub and the pages only call them. Orders go through the outbox like reports. No remote URL at runtime.
