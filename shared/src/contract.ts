@@ -1,6 +1,7 @@
 // The API contract as code (docs/CONTRACT.md sections 2-6): report types and strict zod request schemas.
 import { z } from 'zod';
 import { LIMITS } from './constants.js';
+import type { GameEvent, GameView } from './game/contract.js';
 
 export const NEED_TYPES = ['food', 'water', 'medical', 'rescue', 'shelter'] as const;
 export type NeedType = (typeof NEED_TYPES)[number];
@@ -52,7 +53,11 @@ export type ErrorCode =
   | 'conflict'
   | 'too_large'
   | 'rate_limited'
-  | 'internal';
+  | 'internal'
+  // game (GAME-CONTRACT section 5)
+  | 'no_game'
+  | 'game_over'
+  | 'not_joined';
 
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };
@@ -131,4 +136,15 @@ export type ServerMessage =
   | { type: 'auth:ok'; payload: { role: 'device' | 'coordinator'; serverTime: number } }
   | { type: 'report:upserted'; payload: { report: Report } }
   | { type: 'stats'; payload: Stats }
-  | { type: 'cloud:status'; payload: CloudStatus };
+  | { type: 'cloud:status'; payload: CloudStatus }
+  // game (GAME-CONTRACT section 6)
+  | { type: 'game:state'; payload: { view: GameView } }
+  | { type: 'game:round'; payload: GameRoundPayload }
+  | { type: 'game:you'; payload: { boatId: string; queued: number; nextSeq: number } };
+
+export interface GameRoundPayload {
+  round: number;
+  events: GameEvent[];
+  scoreAfter: number;
+  waterLevel: number;
+}

@@ -2,7 +2,7 @@
 import type http from 'node:http';
 import type https from 'node:https';
 import { WebSocket, WebSocketServer } from 'ws';
-import { TIMING, type CloudStatus, type Report, type ServerMessage } from '@relief-mesh/shared';
+import { TIMING, type CloudStatus, type GameRoundPayload, type GameView, type Report, type ServerMessage } from '@relief-mesh/shared';
 import { resolveToken, type Auth } from './auth.js';
 import type { HubDb } from './db.js';
 
@@ -11,9 +11,13 @@ export interface Events {
   reportUpserted(report: Report): void;
   deviceRevoked(deviceId: string): void;
   cloudStatus(status: CloudStatus): void;
+  /** Game (GAME-CONTRACT section 6): the view goes to everyone, `you` only to that crew's phone. */
+  gameState(view: GameView): void;
+  gameRound(payload: GameRoundPayload): void;
+  gameYou(deviceId: string, you: NonNullable<GameView['you']>): void;
 }
 
-export const noEvents: Events = { reportUpserted() {}, deviceRevoked() {}, cloudStatus() {} };
+export const noEvents: Events = { reportUpserted() {}, deviceRevoked() {}, cloudStatus() {}, gameState() {}, gameRound() {}, gameYou() {} };
 
 interface Client {
   ws: WebSocket;
@@ -123,6 +127,20 @@ export class WsHub implements Events {
   cloudStatus(status: CloudStatus): void {
     for (const c of this.clients) {
       if (c.auth?.role === 'coordinator') send(c.ws, { type: 'cloud:status', payload: status });
+    }
+  }
+
+  gameState(view: GameView): void {
+    for (const c of this.clients) if (c.auth) send(c.ws, { type: 'game:state', payload: { view } });
+  }
+
+  gameRound(payload: GameRoundPayload): void {
+    for (const c of this.clients) if (c.auth) send(c.ws, { type: 'game:round', payload });
+  }
+
+  gameYou(deviceId: string, you: NonNullable<GameView['you']>): void {
+    for (const c of this.clients) {
+      if (c.auth?.role === 'device' && c.auth.deviceId === deviceId) send(c.ws, { type: 'game:you', payload: you });
     }
   }
 }

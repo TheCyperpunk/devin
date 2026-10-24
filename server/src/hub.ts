@@ -7,6 +7,8 @@ import path from 'node:path';
 import { LIMITS, TIMING, type CloudStatus } from '@relief-mesh/shared';
 import { fail, keyByTokenOrIp, rateLimit } from './auth.js';
 import type { HubDb } from './db.js';
+import { GameService, type Timers } from './game.js';
+import { createGameRoutes } from './gameRoutes.js';
 import { createRoutes } from './routes.js';
 import { WsHub } from './ws.js';
 
@@ -21,11 +23,14 @@ export interface HubOptions {
   authRateLimitPerMin?: number;
   wsAuthDeadlineMs?: number;
   cloudStatus?: () => CloudStatus;
+  /** Game round timers (tests inject fake ones). */
+  gameTimers?: Timers;
 }
 
 export function createHub(opts: HubOptions) {
   const now = opts.now ?? Date.now;
   const ws = new WsHub(opts.db, now, opts.wsAuthDeadlineMs ?? TIMING.wsAuthDeadlineMs);
+  const game = new GameService(opts.db, ws, now, opts.gameTimers);
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: LIMITS.bodyMaxBytes }));
@@ -54,6 +59,7 @@ export function createHub(opts: HubOptions) {
       authRateLimitPerMin: opts.authRateLimitPerMin ?? 10,
     }),
   );
+  app.use('/api/game', createGameRoutes({ db: opts.db, game, now }));
   app.use('/api', (_req, res) => fail(res, 404, 'not_found', 'No such endpoint'));
 
   if (opts.webDist && existsSync(opts.webDist)) {
@@ -88,6 +94,7 @@ export function createHub(opts: HubOptions) {
   return {
     app,
     ws,
+    game,
     attach(server: http.Server | https.Server) {
       ws.attach(server);
     },

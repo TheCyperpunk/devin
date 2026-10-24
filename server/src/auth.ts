@@ -33,7 +33,7 @@ export function fail(res: Response, status: number, code: ErrorCode, message: st
   res.status(status).json(body);
 }
 
-function bearer(req: Request): string | null {
+export function bearer(req: Request): string | null {
   const m = /^Bearer ([A-Za-z0-9_-]{20,128})$/.exec(req.header('authorization') ?? '');
   return m ? (m[1] as string) : null;
 }

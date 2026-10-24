@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { CloudStatus, PhoneReportInput } from '@relief-mesh/shared';
 import { CloudSync, toCloudRow, type CloudClient, type CloudRow } from './cloudSync.js';
 import { HubDb } from './db.js';
-import type { Events } from './ws.js';
+import { noEvents, type Events } from './ws.js';
 
 class FakeCloud implements CloudClient {
   rows = new Map<string, CloudRow>();
@@ -35,7 +35,7 @@ let cloud: FakeCloud;
 let statuses: CloudStatus[];
 let sync: CloudSync;
 let now: number;
-const events: Events = { reportUpserted() {}, deviceRevoked() {}, cloudStatus: (s) => statuses.push(s) };
+const events: Events = { ...noEvents, cloudStatus: (s) => statuses.push(s) };
 const device = { deviceId: 'dev-1', reporterName: 'Asha' };
 
 const input = (over: Partial<PhoneReportInput> = {}): PhoneReportInput => ({

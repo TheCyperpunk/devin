@@ -4,6 +4,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import {
   LIMITS,
   baseScore,
+  type GameState,
   type NeedType,
   type PatchReport,
   type PhoneReportInput,
@@ -47,6 +48,11 @@ create table if not exists reports (
 );
 create index if not exists reports_device  on reports(device_id, revision);
 create index if not exists reports_pending on reports(cloud_revision, revision);
+create table if not exists game (
+  id         text primary key,
+  state_json text not null,
+  updated_at integer not null
+);
 `;
 
 interface ReportRow {
@@ -138,6 +144,29 @@ export class HubDb {
   /** Copy the whole database to `file` as one consistent snapshot (SQLite backup API, safe while in use). */
   backupTo(file: string): Promise<void> {
     return this.db.backup(file).then(() => undefined);
+  }
+
+  // ---- game (GAME-CONTRACT section 2 and 4.1): one current game, whole state as JSON, its own revision ----
+  get gameRevision(): number {
+    return Number(this.getMeta('game_revision') ?? '0');
+  }
+  /** Persists the state and returns the new game revision. Every change goes through here. */
+  saveGame(state: GameState, now: number): number {
+    return this.db.transaction((): number => {
+      const rev = this.gameRevision + 1;
+      this.setMeta('game_revision', String(rev));
+      this.setMeta('current_game_id', state.id);
+      this.db
+        .prepare('insert into game(id, state_json, updated_at) values(?, ?, ?) on conflict(id) do update set state_json = excluded.state_json, updated_at = excluded.updated_at')
+        .run(state.id, JSON.stringify(state), now);
+      return rev;
+    })();
+  }
+  loadGame(): GameState | null {
+    const id = this.getMeta('current_game_id');
+    if (!id) return null;
+    const row = this.db.prepare('select state_json from game where id = ?').get(id) as { state_json: string } | undefined;
+    return row ? (JSON.parse(row.state_json) as GameState) : null;
   }
 
   // ---- meta ----

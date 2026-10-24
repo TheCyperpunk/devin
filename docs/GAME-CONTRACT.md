@@ -129,6 +129,8 @@ Error codes: existing ones plus `game_over`, `not_joined`, `no_game`.
 No phone → hub game messages over WS. Orders always go through REST + outbox.
 
 ## 7. Timing
+
+Implemented in G2 as: the hub never enters `resolving`; it broadcasts `game:round` and then the new `game:state`, and screens animate in between. Pause keeps the remaining seconds in memory (a hub restart while paused resumes with a full round). Heartbeats (`GET /state`, `/orders`, `/join`) update contact without bumping the revision.
 `roundSeconds` 45 (host can pick 30/60). Early resolve when every non-bot boat in contact has a queued order and
 at least 10 s have passed (gives latecomers a moment). Animation window 4 s during which `phase = 'resolving'`
 and orders are accepted for the next round. Out-of-contact threshold 20 s without any request from that device.

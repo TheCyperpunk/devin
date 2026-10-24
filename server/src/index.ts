@@ -48,6 +48,7 @@ setupServer.listen(config.setupPort, '0.0.0.0', () => {
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, () => {
     cloud.stop();
+    hub.game.stop();
     hubServer.close();
     setupServer.close();
     db.close();

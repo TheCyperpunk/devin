@@ -28,7 +28,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Gate:** `npm run sim` output reads like a believable night; stars set from the bot baseline.
 - Done: files as listed (the scenario is `thuruthu.ts`, not JSON). Tuning from the simulator: people board on arrival, shelters count for unloading, roof countdown 3, lost −15, four houses raised out of the first flood, 34 people. Bots: 3 → 170 (23 saved, 8 lost), 4 → 238, 5 → 343 (31 saved); 200 random nights with 3 bots: median 34, 47% saved. `starBase = 170`.
 
-## G2 — Hub
+## G2 — Hub ✅ (10 HTTP/WS tests with fake timers: rounds, early resolve, out-of-contact catch-up, restart mid-round, host controls)
 - `server/src/db.ts` — table `game (id, state_json, updated_at)` + meta `game_revision`; `saveGame`, `loadGame`.
 - `server/src/game.ts` — `GameService`: holds the live state, round timer (`deadlineAt`), early resolve, applies
   orders, bumps revision, broadcasts; everything persisted after each change so a hub restart resumes mid-game.
@@ -37,6 +37,7 @@ phone no-signal, phone result; private until shared from its Share menu).
 - Tests: two fake crews + bots play three rounds over HTTP with fake timers; offline crew's late orders apply in
   sequence; duplicate order ids are no-ops; restart mid-game resumes with the same revision; host controls.
 - **Gate:** `curl` a whole round from two terminals; the hub log shows `[game] round N resolved`.
+- Done: `game` table + `game_revision` meta in `db.ts`; `GameService` (`game.ts`) owns the one current game, persists after every change, arms the round timer from `deadlineAt`, resolves overdue rounds on boot, resolves early once every crew in contact has ordered and 10 s have passed, keeps heartbeats out of the revision; `gameRoutes.ts` serves GAME-CONTRACT §5; `ws.ts` pushes `game:state`, `game:round`, `game:you`. The `resolving` phase is not used by the hub: screens animate `game:round` on their own.
 
 ## G3 — Big screen (`/screen.html`)
 - `web/src/game/theme.css` (tokens from GAME-VISUAL), `web/public/fonts/` via `scripts/fetch-fonts.mjs`
