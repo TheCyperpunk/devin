@@ -41,7 +41,7 @@ export interface ScreenEnv {
 type Listener = (s: ScreenState) => void;
 
 export const TOAST_MS = 6000;
-export const MAX_TOASTS = 5;
+export const MAX_TOASTS = 4;
 
 export class ScreenStore {
   state: ScreenState;

@@ -107,6 +107,38 @@ export const SPRITES = {
     rows: ['....KK....', '...KWWK...', 'CCCCCCCCCC', '.CCCCCCCC.', '..CCCCCC..'],
     palette: { K: P.black, W: P.white, C: '#000' },
   },
+  palm: {
+    rows: ['..G...G..', '.G.G.G.G.', 'G..GGG..G', '...GGG...', '.G.GDG.G.', '....D....', '....D....', '....D....', '...DD....', '...DD....'],
+    palette: { G: '#2f9e7b', D: P.wood },
+  },
+  palmSmall: {
+    rows: ['.G.G.', 'G.G.G', '..D..', '..D..', '..D..'],
+    palette: { G: '#2f9e7b', D: P.wood },
+  },
+  person: {
+    rows: ['.W.', 'WWW', '.W.', 'W.W'],
+    palette: { W: P.white },
+  },
+  child: {
+    rows: ['.Y.', 'YYY', 'Y.Y'],
+    palette: { Y: P.yellow },
+  },
+  elder: {
+    rows: ['.W.D', 'WWWD', '.W.D', 'W.W.'],
+    palette: { W: P.white, D: P.wood },
+  },
+  kitWater: {
+    rows: ['..B..', '.BBB.', 'BBBBB', '.BFB.'],
+    palette: { B: P.water2, F: P.foam },
+  },
+  kitFood: {
+    rows: ['.....', 'WWWWW', '.WWW.', '..W..'],
+    palette: { W: P.wall },
+  },
+  kitMed: {
+    rows: ['.RRR.', 'RRWRR', 'RWWWR', 'RRWRR'],
+    palette: { R: P.red, W: P.white },
+  },
   star: {
     rows: ['....Y....', '...YYY...', 'YYYYYYYYY', '.YYYYYYY.', '..YYYYY..', '.YYY.YYY.', 'YY.....YY'],
     palette: { Y: P.yellow },

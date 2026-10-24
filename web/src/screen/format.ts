@@ -94,3 +94,6 @@ export function totals(view: GameView) {
     outOfContactRounds: events.filter((e) => e.type === 'standing_used').length,
   };
 }
+
+/** Which pixel icon stands for each kit. */
+export const KIT_WORD_SPRITE: Record<Kit, 'kitWater' | 'kitFood' | 'kitMed'> = { water: 'kitWater', food: 'kitFood', medical: 'kitMed' };

@@ -35,6 +35,18 @@ house shows its roof over two rows of water and a "~" after its name; a safe she
 red under 10 s. Toasts are small black boxes with a coloured 3 px frame. A faint CRT scanline overlay (12 %) sits
 under the overlays so the lobby QR stays crisp for cameras; the small QR in the bar is raised above it.
 
+**Second pass: what the best 2D games do.** Looking at Stardew Valley, Advance Wars, Fire Emblem, Zelda (A Link to
+the Past) and Celeste gave five rules we now follow. (1) A tile *world*, not sprites on a flat card: the land is a
+dithered soil tile with grass ticks, coconut palms stand on the banks, the paddy fields are striped tiles, and the river
+is a channel with two banks (a polyline centre line keeps every house on a bank) that widens upward as the level rises,
+so a flooded house really stands in water. (2) Every sprite has a 1-pixel black outline (an `feMorphology` dilate
+filter) and every label a dark stroke, so they read on any tile at 5 m. (3) Light sells night: houses with people
+calling get a dithered yellow halo and lit windows. (4) Units are alive: boats bob two frames at rest, foam alternates
+two frames, rain falls diagonally, lightning flashes every ~23 s. (5) Feedback where it happens: score pops ("+30",
+"-45") rise from the house in 8 steps; the panel shows people as pixel figures (child, elder, person) and kits as icons;
+the water level is a four-segment bar. Roads are a dark bed with a dashed wood crown. The lobby logo is three-layer
+(yellow, orange step, black drop).
+
 **Motion.** Stepped only: `steps(n)` on every transition and keyframe; blink at 0.8 s; "▶ PRESS START" blinks in the
 lobby. `prefers-reduced-motion` stops all of it.
 

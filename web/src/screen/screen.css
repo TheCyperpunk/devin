@@ -29,8 +29,23 @@
 .map.dim { opacity: .3; }
 .map .boat { transition: transform .8s steps(10), opacity .3s steps(3); }
 .map .boat.off { opacity: .5; }
-.map .flood { transition: transform 1.2s steps(7); }
+.map .boat .bob { animation: bob 1s steps(1) infinite; }
+.map .boat:nth-child(2n) .bob { animation-delay: .5s; }
 .map .call.blink { animation: blink .8s steps(1) infinite; }
+.map .waveA { animation: waveSwap 1.2s steps(1) infinite; }
+.map .waveB { animation: waveSwapB 1.2s steps(1) infinite; }
+.map .river.splash { animation: splash .6s steps(2) 2; }
+.map .popText { animation: floatUp 2s steps(8) both; }
+.map .flash { animation: lightning 23s steps(1) infinite; }
+.map .rain { animation-duration: 1.1s; }
+.brand .title { text-shadow: 3px 3px 0 var(--p-orange), 6px 6px 0 var(--p-black); }
+.display.h1 { text-shadow: 5px 5px 0 var(--p-orange), 10px 10px 0 var(--p-black); }
+.icon { display: inline-block; vertical-align: -2px; margin-right: 2px; }
+.call .icons { display: flex; gap: 4px; align-items: flex-end; min-height: 18px; margin: 2px 0; }
+.call .icons .more { font-family: var(--font-display); font-size: 9px; color: var(--ink-2); }
+.water .bar { display: inline-flex; gap: 3px; }
+.water .seg { width: 12px; height: 18px; background: var(--p-black); border: 2px solid var(--p-grey); }
+.water .seg.on { background: var(--p-water-2); border-color: var(--p-foam); }
 
 .side { width: 440px; box-sizing: border-box; padding: 22px 24px 16px; display: flex; flex-direction: column; gap: 16px; background: var(--p-black); border-left: var(--px) solid var(--p-white); overflow: hidden; }
 .side .head { display: flex; justify-content: space-between; align-items: baseline; }
@@ -65,8 +80,8 @@
 .qr.placeholder { display: inline-block; opacity: .3; }
 
 /* toasts and notices */
-.toasts { position: absolute; left: 24px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; max-width: 560px; pointer-events: none; }
-.toast { display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: var(--p-black); border: 3px solid var(--p-grey); box-shadow: 4px 4px 0 0 rgba(0,0,0,.7); font-size: 19px; }
+.toasts { position: absolute; left: 20px; bottom: 16px; display: flex; flex-direction: column; gap: 6px; max-width: 440px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: var(--p-black); border: 3px solid var(--p-grey); box-shadow: 4px 4px 0 0 rgba(0,0,0,.7); font-size: 17px; opacity: .92; }
 .toast .dot { width: 10px; height: 10px; background: var(--p-grey); flex: none; }
 .toast.good .dot { background: var(--p-green); } .toast.good { border-color: var(--p-green); }
 .toast.bad .dot { background: var(--p-red); } .toast.bad { border-color: var(--p-red); }

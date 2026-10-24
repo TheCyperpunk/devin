@@ -81,7 +81,7 @@ try {
     await clickHost(page, 'skip-round');
     await sleep(250);
   }
-  ok(await waitText(page, 'Water level 1'), 'rounds: water rose after round 3');
+  ok(await waitText(page, 'Water 1'), 'rounds: water rose after round 3');
   ok((await page.$eval('[data-testid=round]', (el) => el.innerText)) === '4', 'rounds: round 4 after three skips');
   const toasts = await page.$$eval('.toast', (els) => els.length);
   ok(toasts > 0, `rounds: event toasts shown (${toasts})`);

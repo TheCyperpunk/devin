@@ -35,9 +35,11 @@ a { color: var(--p-yellow); }
 .panel, .glass, .pbox {
   background: var(--p-navy);
   border: var(--px) solid var(--p-white);
-  box-shadow: inset 0 0 0 var(--px) var(--p-black), 8px 8px 0 0 var(--p-black);
+  box-shadow: inset 0 0 0 var(--px) var(--p-black), inset 8px 8px 0 0 rgba(255,255,255,.06), 8px 8px 0 0 var(--p-black);
   border-radius: 0;
 }
+/* layered logo: yellow face, orange step, black drop */
+.logo { color: var(--p-yellow); text-shadow: 4px 4px 0 var(--p-orange), 8px 8px 0 var(--p-black); }
 .glass { border-color: var(--p-grey); box-shadow: inset 0 0 0 var(--px) var(--p-black); }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 22px;
@@ -67,6 +69,12 @@ a { color: var(--p-yellow); }
 @keyframes rain { from { transform: translateY(-140px); } to { transform: translateY(1300px); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pop { 0% { transform: scale(.8); } 100% { transform: scale(1); } }
+@keyframes bob { 0%, 49% { transform: translateY(0); } 50%, 100% { transform: translateY(-2px); } }
+@keyframes waveSwap { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes waveSwapB { 0%, 49% { opacity: 0; } 50%, 100% { opacity: 1; } }
+@keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
+@keyframes lightning { 0%, 94% { opacity: 0; } 95% { opacity: .22; } 96% { opacity: 0; } 97% { opacity: .12; } 98%, 100% { opacity: 0; } }
+@keyframes splash { 0%, 100% { filter: none; } 50% { filter: brightness(1.6); } }
 .wave { animation: drift 1.2s steps(4) infinite; }
 .blink { animation: blink .8s steps(1) infinite; }
 .blinkText { animation: blinkText 1s steps(1) infinite; }

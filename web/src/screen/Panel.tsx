@@ -1,6 +1,22 @@
-// Right column of the big screen: calls by urgency, crews, water level.
+// Right column of the big screen: calls by urgency (with pixel icons for people, child, elderly, kits), crews,
+// and the water level as a segmented bar.
 import { GAME, thuruthu, type GameView } from '@relief-mesh/shared';
-import { COLOR_HEX, KIT_WORD, NEED_WORD, nodeName } from './format.js';
+import { KIT_WORD_SPRITE, nodeName } from './format.js';
+import { COLOR_PX, SPRITES, spriteRects, type SpriteName } from './sprites.js';
+
+export function Icon({ name, size = 16, title }: { name: SpriteName; size?: number; title?: string }) {
+  const s = SPRITES[name];
+  const w = Math.max(...s.rows.map((r) => r.length));
+  const h = s.rows.length;
+  const rects = spriteRects(s, 1);
+  return (
+    <svg className="icon" viewBox={`${-w / 2} ${-h} ${w} ${h}`} width={size * (w / h)} height={size} shapeRendering="crispEdges" role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
+      {rects.map((r, i) => (
+        <rect key={i} x={r.x} y={r.y} width={r.w} height={r.h} fill={r.fill} />
+      ))}
+    </svg>
+  );
+}
 
 export function Panel({ view }: { view: GameView }) {
   const open = view.calls
@@ -8,6 +24,8 @@ export function Panel({ view }: { view: GameView }) {
     .map((c) => ({ c, u: view.urgency[c.id] ?? { score: 0, band: 'yellow' as const } }))
     .sort((a, b) => b.u.score - a.u.score || a.c.id.localeCompare(b.c.id));
   const nextRise = thuruthu.riseAfterRounds.find((r) => r >= view.round);
+  const houses = thuruthu.nodes.filter((n) => n.kind === 'house' && !n.safe);
+  const flooded = houses.filter((n) => view.waterLevel >= n.height).length;
 
   return (
     <aside className="side">
@@ -22,13 +40,21 @@ export function Panel({ view }: { view: GameView }) {
             <span className="score num">{u.score}</span>
             <span className="what">
               <span className="t">{nodeName(c.nodeId)}</span>
+              <span className="icons">
+                {Array.from({ length: Math.min(c.remaining, 6) }, (_, i) => (
+                  <Icon key={i} name={i < c.priorityLeft ? (c.hasChildren ? 'child' : 'elder') : 'person'} />
+                ))}
+                {c.remaining > 6 && <span className="more">+{c.remaining - 6}</span>}
+                {c.kitsNeeded.map((k) => (
+                  <Icon key={k} name={KIT_WORD_SPRITE[k]} title={k + ' kit needed'} />
+                ))}
+              </span>
               <span className="m">
                 {c.remaining > 0 ? `${c.remaining} ${c.remaining === 1 ? 'person' : 'people'}` : 'everyone aboard'}
                 {c.hasChildren ? ' · child' : ''}
                 {c.hasElderlyOrSick ? ' · elderly' : ''}
                 {c.urgent ? ' · urgent' : ''}
-                {c.kitsNeeded.length ? ' · needs ' + c.kitsNeeded.map((k) => KIT_WORD[k]).join(', ') : ''}
-                {c.roofRounds !== null ? ` · on the roof, ${c.roofRounds} ${c.roofRounds === 1 ? 'round' : 'rounds'} left` : ''}
+                {c.roofRounds !== null ? ` · roof ${c.roofRounds}` : ''}
               </span>
             </span>
           </div>
@@ -42,14 +68,10 @@ export function Panel({ view }: { view: GameView }) {
           const contact = view.contact[b.id] ?? true;
           return (
             <div key={b.id} className={'crew' + (contact ? '' : ' off')} data-crew={b.id}>
-              <span className="chip" style={{ background: COLOR_HEX[b.color], opacity: contact ? 1 : 0.6 }} />
+              <span className="chip" style={{ background: COLOR_PX[b.color], opacity: contact ? 1 : 0.6 }} />
               <span className="name">{b.name}</span>
               {b.bot && <span className="tag">bot</span>}
-              {!contact && (
-                <svg aria-label="no signal" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A93A6" strokeWidth="1.75" strokeLinecap="round">
-                  <path d="M2 2l20 20M5 12.5a9 9 0 0 1 3-2.5M8.5 16a5 5 0 0 1 3-1.5M12 19.5h.01M2 9a14 14 0 0 1 5.5-3.5M16 11a9 9 0 0 1 3 1.5" />
-                </svg>
-              )}
+              {!contact && <Icon name="radioOff" title="no signal" size={14} />}
               <span className="r">
                 {nodeName(b.nodeId)} · {b.passengers.length}/{GAME.capacity}
                 {contact ? '' : ' · no signal'}
@@ -61,17 +83,19 @@ export function Panel({ view }: { view: GameView }) {
       </section>
 
       <div className="water glass">
-        <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2FA8C4" strokeWidth="1.75" strokeLinecap="round">
-          <path d="M3 15c3-3 6 3 9 0s6 3 9 0M3 10c3-3 6 3 9 0s6 3 9 0" />
-        </svg>
+        <span className="bar" role="img" aria-label={`water level ${view.waterLevel} of 4`}>
+          {[1, 2, 3, 4].map((i) => (
+            <span key={i} className={'seg' + (view.waterLevel >= i ? ' on' : '')} />
+          ))}
+        </span>
         <span>
-          Water level <b>{view.waterLevel}</b>
-          {view.phase === 'ended' ? '' : nextRise ? ` · rises again after round ${nextRise}` : ' · no more rises'}
+          Water <b>{view.waterLevel}</b>
+          {view.phase === 'ended' ? '' : nextRise ? ` · rises after round ${nextRise}` : ' · no more rises'}
         </span>
       </div>
       <p className="hint needs">
-        {thuruthu.nodes.filter((n) => n.kind === 'house' && !n.safe && view.waterLevel >= n.height).length} of{' '}
-        {thuruthu.nodes.filter((n) => n.kind === 'house' && !n.safe).length} houses flooded · needs: {Object.values(NEED_WORD).join(', ')}
+        {flooded} of {houses.length} houses flooded · <Icon name="person" size={12} /> person · <Icon name="child" size={12} /> child · <Icon name="elder" size={12} /> elderly ·{' '}
+        <Icon name="kitWater" size={12} /> <Icon name="kitFood" size={12} /> <Icon name="kitMed" size={12} /> kits
       </p>
     </aside>
   );

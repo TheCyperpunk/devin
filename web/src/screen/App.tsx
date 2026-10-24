@@ -1,6 +1,6 @@
 // Big screen shell: passcode, then the map with its panels, and the lobby / end overlays. Plays sounds on rounds.
 import { useEffect, useState, type FormEvent } from 'react';
-import { WardMap } from './Map.js';
+import { WardMap, popsFor } from './Map.js';
 import { BottomBar, TopBar } from './Bars.js';
 import { EndScreen } from './EndScreen.js';
 import { Lobby } from './Lobby.js';
@@ -44,6 +44,7 @@ export function App() {
 
   const view = state.view;
   const hubNow = now + state.clockOffset;
+  const pops = state.lastRound && state.lastRoundAt && now - state.lastRoundAt < 2500 ? popsFor(state.lastRound.events, state.lastRoundAt) : [];
   const showLobby = state.noGame || view?.phase === 'lobby' || (!view && state.hub !== 'unknown');
 
   return (
@@ -51,7 +52,7 @@ export function App() {
       <TopBar view={view} hubNow={hubNow} hub={state.hub} />
       <main className="stage">
         <div className="mapWrap">
-          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} />
+          <WardMap view={view} dim={showLobby || view?.phase === 'ended'} pops={pops} />
           <Toasts toasts={state.toasts} />
           {state.notice && <div className="notice">{state.notice}</div>}
         </div>
