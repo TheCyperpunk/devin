@@ -37,6 +37,17 @@ Airplane mode off, tap **Retry now**. The order arrives once and plays. "Same th
 ## 5. First light (30 s)
 Skip to the end. Read the three numbers and their 2018 lines. "Every order from every phone arrived exactly once."
 
+## Rehearsal checklist (run it three times before demo day, with a timer)
+1. Hub started, screen logged in, sound on, QR on the lobby: under 60 s from a cold laptop.
+2. Two phones join by QR with no help from you; the third by typing the code.
+3. Start the night. Say the one-line rules while round 1 counts down.
+4. Round 2 or 3: one phone taps GO on the radio; say "that is a whole route, queued".
+5. Send a boat into the bend. Show the phone's "No signal" banner, the screen's dashed crew card, then the
+   boat coming back and its orders landing.
+6. Airplane mode on one phone for 20 s, then off: the queued order arrives exactly once.
+7. Skip to first light. Read the verdict line and the three numbers. Ask the room the closing question.
+8. Total under five minutes; note what ran long and cut it next run.
+
 ## If something breaks
 - Phone cannot load the page: wrong Wi-Fi, or the certificate is not trusted. Use the spare phone.
 - Phone stuck on "Hub not reachable": the laptop changed IP. Check `HUB_IP` in `.env`; restart the hub.

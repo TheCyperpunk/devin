@@ -1,5 +1,5 @@
-// All phone text in English and Malayalam, in one place so a native speaker can fix it. Malayalam lines marked
-// "draft" in GAME-PLAN G6 still need that check.
+// All phone text in English and Malayalam, in one place so a native speaker can fix it. The Malayalam is a careful
+// draft (reviewed once in G6, not yet by a native speaker): keep sentences short and literal when adding lines.
 
 export type Lang = 'en' | 'ml';
 export const LANGS: readonly Lang[] = ['en', 'ml'];
@@ -107,6 +107,12 @@ const en = {
   youAreAt: 'You are at {place}',
   orByHand: 'Or one move at a time',
   othersHere: 'Boats here: {names}',
+
+  // first light
+  endAll: 'Everyone came home.',
+  endNoneLost: 'Nobody was lost to the water tonight.',
+  endLost: '{n} were still on their roofs at first light.',
+  endAsk: 'What would you do differently next time?',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -180,7 +186,7 @@ const ml: Record<StringKey, string> = {
   lastUpdate: 'അവസാന അപ്‌ഡേറ്റ് {s} സെ. മുമ്പ്',
   paused: 'താൽക്കാലികമായി നിർത്തി',
   aboardCount: '{n}/{max} ബോട്ടിൽ',
-  waterKit: 'വെള്ളം കിറ്റ്',
+  waterKit: 'കുടിവെള്ള കിറ്റ്',
   foodKit: 'ഭക്ഷണ കിറ്റ്',
   medicalKit: 'മെഡിക്കൽ കിറ്റ്',
   youRescued: '{place}-ൽ {n} പേരെ ബോട്ടിൽ കയറ്റി',
@@ -210,6 +216,11 @@ const ml: Record<StringKey, string> = {
   youAreAt: 'നിങ്ങൾ {place}-ൽ ആണ്',
   orByHand: 'അല്ലെങ്കിൽ ഓരോ നീക്കമായി',
   othersHere: 'ഇവിടെയുള്ള ബോട്ടുകൾ: {names}',
+
+  endAll: 'എല്ലാവരും സുരക്ഷിതരായി.',
+  endNoneLost: 'ഇന്ന് രാത്രി ആരെയും വെള്ളത്തിന് നഷ്ടപ്പെട്ടില്ല.',
+  endLost: 'പുലരുമ്പോഴും {n} പേർ മേൽക്കൂരയിൽ തന്നെയായിരുന്നു.',
+  endAsk: 'അടുത്ത തവണ നിങ്ങൾ എന്ത് വ്യത്യസ്തമായി ചെയ്യും?',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, ml };

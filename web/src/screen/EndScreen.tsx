@@ -8,6 +8,7 @@ export function EndScreen({ view, store, busy }: { view: GameView; store: Screen
   const t = totals(view);
   const priorityPct = t.saved ? Math.round((t.priority / t.saved) * 100) : 0;
   const ranked = [...view.boats].sort((a, b) => b.saved - a.saved || a.name.localeCompare(b.name));
+  const verdict = t.lost === 0 && t.saved >= t.people ? 'Everyone came home.' : t.lost === 0 ? 'Nobody was lost to the water tonight.' : `${t.lost} were still on their roofs at first light.`;
   return (
     <div className="overlay end">
       <div className="panel endPanel pop">
@@ -39,6 +40,10 @@ export function EndScreen({ view, store, busy }: { view: GameView; store: Screen
             <div className="h">crew-rounds out of contact</div>
             <div className="l">Networks faltered; WhatsApp groups became the control room.</div>
           </div>
+        </div>
+        <div className="verdict">
+          <span className="display">{verdict}</span>
+          <span className="ask">What would you do differently next time?</span>
         </div>
         <div className="ranked glass">
           <span className="label">Crews</span>

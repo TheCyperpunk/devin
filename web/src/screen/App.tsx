@@ -31,6 +31,7 @@ export function App() {
     };
   }, [store, state.session]);
 
+  useEffect(() => sound.rain(state.sound), [state.sound]);
   useEffect(() => {
     store.onRound = (p) => {
       if (store.state.sound) sound.round(p);

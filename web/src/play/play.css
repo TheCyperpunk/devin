@@ -67,6 +67,8 @@ p { margin: 0; line-height: 1.5; }
 .result { padding: 14px 16px; background: var(--p-black); border: var(--px) solid var(--p-green); display: grid; gap: 6px; }
 .result .pts { font-size: 28px; color: var(--p-green); }
 .result .pts.neg { color: var(--p-red); }
+.end .verdict { font-weight: 700; font-size: 20px; color: var(--p-yellow); }
+.end .ask { font-size: 18px; color: var(--ink-2); }
 .end .score { font-size: 40px; color: var(--p-yellow); text-shadow: 4px 4px 0 var(--p-black); }
 .end .stars { font-size: 28px; color: var(--p-yellow); letter-spacing: 6px; }
 .crews { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

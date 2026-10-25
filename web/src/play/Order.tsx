@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GAME, KITS, type Boat, type GameView, type Order } from '@pralayam/shared';
 import { COLOR_PX } from '../game/sprites.js';
 import type { GameSync, GameSyncState } from '../lib/gameSync.js';
+import { buzz, tick } from './feedback.js';
 import { LangToggle, useLang } from './lang.js';
 import { NODES, estimatedRound, legalOrders, nodeName, routeOrders, suggest, ward, type OrderOption } from './orders.js';
 import { WardMap } from '../screen/Map.js';
@@ -72,6 +73,20 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
     return () => window.clearTimeout(id);
   }, [sentAt]);
 
+  // Haptics: a nudge when the round lands (sharper when it cost you); three short buzzes when the signal drops.
+  useEffect(() => {
+    const p = state.lastRound;
+    if (!p || state.lastRoundAt === null) return;
+    const pts = p.events.filter((e) => e.boatId === boat.id).reduce((n, e) => n + e.points, 0);
+    if (pts < 0) buzz([60, 40, 60]);
+    else if (pts > 0) buzz(30);
+  }, [state.lastRoundAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hadContact = useRef(contact);
+  useEffect(() => {
+    if (hadContact.current && !contact) buzz([40, 40, 40]);
+    hadContact.current = contact;
+  }, [contact]);
+
   const movesWord = (n: number) => (n === 1 ? t('oneMove') : t('movesAway', { n }));
   const entersDeadZone = (steps: Order[]) => steps.some((o) => o.type === 'move' && !(NODES[o.nodeId]?.signal ?? true));
 
@@ -83,6 +98,8 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
     if (mode === 'plan') await sync.plan(steps, dest);
     else for (const o of steps) await sync.submit(o, 'append');
     setSentAt(Date.now());
+    tick();
+    buzz(20);
     setPicked(null);
     setTarget(null);
     setSheet(false);
