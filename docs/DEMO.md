@@ -3,8 +3,9 @@
 Two phones, the laptop on the projector, the hotspot up. No Internet anywhere. Rehearse it three times.
 
 ## Before the judges arrive
-- Laptop: hotspot or the fixed-IP Wi-Fi, hub started (`npm start`), `https://<HUB_IP>:3443/screen.html` full screen
-  (F11), passcode entered, lobby open with bots on and 45-second rounds.
+- Laptop: hotspot or the fixed-IP Wi-Fi up first, then `npm run app:check` (it names anything wrong), then the
+  **Pralayam** desktop icon (docs/DESKTOP.md; `npm start` and a browser at `https://<HUB_IP>:3443/screen.html` work
+  too), F11 for full screen, passcode entered, lobby open with bots on and 45-second rounds.
 - Two phones already paired (certificate trusted, app installed), one of them yours. Spare phone in your pocket.
 - Sound on (speaker button) if the room allows it.
 

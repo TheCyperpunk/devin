@@ -10,6 +10,7 @@ is needed at any point: a local hub on the laptop runs the whole night over Wi-F
 - [docs/GAME-VISUAL.md](docs/GAME-VISUAL.md) — the pixel design system
 - [docs/GAME-PLAN.md](docs/GAME-PLAN.md) — phases and gates
 - [docs/DECISIONS.md](docs/DECISIONS.md) — architecture and safety rules
+- [docs/DESKTOP.md](docs/DESKTOP.md) — the laptop as a desktop app: one icon starts the hub and opens the big screen
 - [AGENTS.md](AGENTS.md) — rules for coding agents
 
 ## Status

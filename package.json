@@ -21,7 +21,11 @@
     "e2e:screen": "node scripts/e2e-screen.mjs",
     "e2e": "node scripts/e2e-screen.mjs",
     "e2e:play": "node scripts/e2e-play.mjs",
-    "e2e:deadzone": "node scripts/e2e-deadzone.mjs"
+    "e2e:deadzone": "node scripts/e2e-deadzone.mjs",
+    "app": "node scripts/desktop.mjs",
+    "app:check": "node scripts/desktop.mjs --check",
+    "app:shortcut": "node scripts/desktop-shortcut.mjs",
+    "e2e:desktop": "node scripts/e2e-desktop.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
