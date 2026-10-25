@@ -38,6 +38,9 @@ a { color: var(--p-yellow); }
   box-shadow: inset 0 0 0 var(--px) var(--p-black), inset 8px 8px 0 0 rgba(255,255,255,.06), 8px 8px 0 0 var(--p-black);
   border-radius: 0;
 }
+/* the game logo (icon.svg): a square pixel picture with a hard frame, like a cartridge label */
+.mark { display: block; flex: none; width: 40px; height: 40px; border: 3px solid var(--p-white); box-shadow: 3px 3px 0 0 var(--p-black); image-rendering: pixelated; }
+.mark.big { width: 112px; height: 112px; border-width: 4px; box-shadow: 6px 6px 0 0 var(--p-black); margin: 0 auto 18px; }
 /* layered logo: yellow face, orange step, black drop */
 .logo { color: var(--p-yellow); text-shadow: 4px 4px 0 var(--p-orange), 8px 8px 0 var(--p-black); }
 .glass { border-color: var(--p-grey); box-shadow: inset 0 0 0 var(--px) var(--p-black); }

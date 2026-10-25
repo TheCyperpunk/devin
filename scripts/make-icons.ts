@@ -1,30 +1,23 @@
-// Renders web/public/icon.svg into the PNG icons Chrome needs before it will offer to install the PWA.
-// Usage: npm run icons   (output is committed, so this only needs re-running if icon.svg changes)
-import { readFileSync } from 'node:fs';
+// Draws the Pralayam logo (web/src/game/logo.ts) into icon.svg and every PNG icon the phone app and the desktop app use.
+// Usage: npm run icons   (output is committed, so this only needs re-running if the logo changes)
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
+import { logoRgba, logoSvg } from '../web/src/game/logo.js';
 
 const pub = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'web', 'public');
-const svg = readFileSync(path.join(pub, 'icon.svg'));
-const GREEN = '#0b6e4f';
+const scene = (cells: number) => sharp(Buffer.from(logoRgba(cells)), { raw: { width: cells, height: cells, channels: 4 } });
 
-async function plain(size: number, file: string) {
-  await sharp(svg, { density: 384 }).resize(size, size).png().toFile(path.join(pub, file));
-}
+writeFileSync(path.join(pub, 'icon.svg'), logoSvg(32));
 
-// Maskable icons are cropped by the launcher: keep the artwork inside the central 80% on a solid background.
-async function maskable(size: number, file: string) {
-  const inner = Math.round(size * 0.62);
-  const art = await sharp(svg, { density: 384 }).resize(inner, inner).png().toBuffer();
-  await sharp({ create: { width: size, height: size, channels: 4, background: GREEN } })
-    .composite([{ input: art, gravity: 'center' }])
-    .png()
-    .toFile(path.join(pub, file));
-}
-
-await plain(192, 'icon-192.png');
-await plain(512, 'icon-512.png');
-await plain(180, 'apple-touch-icon.png');
-await maskable(512, 'icon-maskable-512.png');
-console.log('Wrote icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png in web/public');
+// whole-number scaling keeps every pixel square: 32 cells -> 192 (6x) and 512 (16x)
+await scene(32).resize(192, 192, { kernel: 'nearest' }).png().toFile(path.join(pub, 'icon-192.png'));
+const big = await scene(32).resize(512, 512, { kernel: 'nearest' }).png().toBuffer();
+await sharp(big).png().toFile(path.join(pub, 'icon-512.png'));
+// Apple wants 180: scale the crisp 512 down once
+await sharp(big).resize(180, 180).png().toFile(path.join(pub, 'apple-touch-icon.png'));
+// Maskable: the same scene with a 4-cell margin all round, so a launcher can crop to a circle and keep the boat
+const wide = await scene(40).resize(1280, 1280, { kernel: 'nearest' }).png().toBuffer();
+await sharp(wide).resize(512, 512).png().toFile(path.join(pub, 'icon-maskable-512.png'));
+console.log('Wrote icon.svg, icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png in web/public');

@@ -75,7 +75,10 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
     <>
       {!full && (
       <header className="top">
-        <span className="display logo">{t('appName')}</span>
+        <span className="brand">
+          <img className="mark" src="/icon.svg" alt="" width="36" height="36" />
+          <span className="display logo">{t('appName')}</span>
+        </span>
         {paired && (
           <span className="status" aria-live="polite">
             <i className={'dot ' + (state.hub === 'online' ? 'ok' : state.hub === 'offline' ? 'bad' : '')} />

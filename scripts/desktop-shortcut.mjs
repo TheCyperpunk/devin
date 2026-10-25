@@ -15,20 +15,28 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'Pralayam');
 mkdirSync(dir, { recursive: true });
 
-// .ico = 6-byte header + one 16-byte directory entry + a PNG (Windows accepts PNG inside an icon since Vista)
-const png = await sharp(path.join(root, 'web', 'public', 'icon.svg'), { density: 384 }).resize(256, 256).png().toBuffer();
-const head = Buffer.alloc(22);
+// .ico = a 6-byte header, one 16-byte directory entry per size, then the PNGs (Windows accepts PNG inside an icon).
+// 256 and 32 are exact whole-number steps of the 32-cell logo, so they stay crisp; 48 and 16 are scaled down.
+const src = path.join(root, 'web', 'public', 'icon-512.png');
+const sizes = [256, 48, 32, 16];
+const pngs = await Promise.all(sizes.map((n) => sharp(src).resize(n, n, { kernel: n === 256 || n === 32 ? 'nearest' : 'lanczos3' }).png().toBuffer()));
+const head = Buffer.alloc(6 + 16 * sizes.length);
 head.writeUInt16LE(0, 0); // reserved
 head.writeUInt16LE(1, 2); // type: icon
-head.writeUInt16LE(1, 4); // one image
-head[6] = 0; // width 256 is stored as 0
-head[7] = 0; // height 256 is stored as 0
-head.writeUInt16LE(1, 10); // colour planes
-head.writeUInt16LE(32, 12); // bits per pixel
-head.writeUInt32LE(png.length, 14);
-head.writeUInt32LE(22, 18); // offset of the image data
+head.writeUInt16LE(sizes.length, 4);
+let offset = head.length;
+sizes.forEach((n, i) => {
+  const o = 6 + 16 * i;
+  head[o] = n === 256 ? 0 : n; // 256 is stored as 0
+  head[o + 1] = n === 256 ? 0 : n;
+  head.writeUInt16LE(1, o + 4); // colour planes
+  head.writeUInt16LE(32, o + 6); // bits per pixel
+  head.writeUInt32LE(pngs[i].length, o + 8);
+  head.writeUInt32LE(offset, o + 12);
+  offset += pngs[i].length;
+});
 const ico = path.join(dir, 'pralayam.ico');
-writeFileSync(ico, Buffer.concat([head, png]));
+writeFileSync(ico, Buffer.concat([head, ...pngs]));
 
 // PowerShell reads its inputs from the environment, so no path ever needs quoting
 const script = `

@@ -74,6 +74,14 @@ model, the Unity pixel-perfect notes) and applied the rules that fit a night flo
 The sprite sheet is validated by `web/src/game/sprites.test.ts`: no ragged rows, no glyph without a colour, ramps
 that darken and cool or lighten and warm.
 
+**Logo and icons (2026-10-25).** The logo is one pixel scene, `web/src/game/logo.ts`: an orange rescue boat with a
+red pennant and one big lantern on dark flood water, a child waving from a half-drowned roof, rain, and the lantern's
+light as a warm dithered ramp (dusk brown, ember, burnt orange; never yellow mixed into navy, which goes khaki). It is
+32x32 cells, full bleed, drawn with the same palette and ramps as the sprites. `npm run icons` renders it to
+`icon.svg` (favicon and in-app mark), `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` and a maskable
+`icon-maskable-512.png` (the same scene on a 40-cell grid so a circular crop keeps the boat); the Windows shortcut
+builds a multi-size `.ico` from the 512. A unit test keeps the subject inside the crop-safe circle.
+
 **Motion.** Stepped only: `steps(n)` on every transition and keyframe; blink at 0.8 s; "▶ PRESS START" blinks in the
 lobby. `prefers-reduced-motion` stops all of it.
 

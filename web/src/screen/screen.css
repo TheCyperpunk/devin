@@ -7,7 +7,8 @@
 .bar { display: flex; align-items: center; gap: 28px; padding: 0 32px; background: var(--p-navy); flex: none; }
 .bar.top { height: 96px; border-bottom: var(--px) solid var(--p-white); box-shadow: 0 var(--px) 0 0 var(--p-black); }
 .bar.bottom { height: 104px; border-top: var(--px) solid var(--p-white); box-shadow: 0 calc(-1 * var(--px)) 0 0 var(--p-black); gap: 24px; }
-.brand { display: flex; align-items: baseline; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand .mark { width: 56px; height: 56px; }
 .brand .title { font-size: 30px; color: var(--p-yellow); text-shadow: 4px 4px 0 var(--p-black); }
 .brand .sub { font-size: 18px; }
 .top .right { margin-left: auto; display: flex; align-items: center; gap: 28px; }

@@ -30,6 +30,7 @@ export function TopBar({ view, hubNow, hub }: { view: GameView | null; hubNow: n
   return (
     <header className="bar top">
       <div className="brand">
+        <img className="mark" src="/icon.svg" alt="" width="56" height="56" />
         <span className="display title">Pralayam</span>
         <span className="muted sub">{thuruthu.name} · 16 August, night</span>
       </div>

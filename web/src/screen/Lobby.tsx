@@ -14,6 +14,7 @@ export function Lobby({ view, join, store, busy }: { view: GameView | null; join
   return (
     <div className="overlay">
       <div className="lobbyTitle rise">
+        <img className="mark big" src="/icon.svg" alt="" width="112" height="112" />
         <div className="display h1">Pralayam</div>
         <div className="muted">{thuruthu.name} · the night of 16 August · a co-op rescue for everyone in the room</div>
         <div className="howto" data-testid="howto">
