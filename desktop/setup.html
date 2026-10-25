@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- Setup window of the desktop app: hub IP, host passcode, certificate, and what is still missing. Pixel-edition look. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; img-src 'self'" />
+    <title>Pralayam setup</title>
+    <style>
+      :root { --black: #0b0b14; --navy: #141b33; --blue: #1c2b55; --yellow: #ffd23f; --orange: #ff7b2e; --red: #ff3c5f; --green: #3fd6a0; --grey: #8a93a6; --white: #f4f1ea; --ink2: #c9cfdb; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 20px; background: var(--black); color: var(--white); font: 16px/1.4 Consolas, 'Courier New', monospace; }
+      h1 { margin: 0 0 4px; font-size: 22px; color: var(--yellow); text-shadow: 3px 3px 0 var(--orange), 6px 6px 0 #000; letter-spacing: 1px; }
+      .sub { color: var(--ink2); margin: 0 0 16px; }
+      .box { background: var(--navy); border: 4px solid var(--white); box-shadow: inset 0 0 0 4px var(--black), 8px 8px 0 0 var(--black); padding: 14px 16px; margin: 0 0 18px; }
+      .box h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink2); }
+      label { display: block; margin: 8px 0 4px; font-weight: 700; }
+      input, select { width: 100%; min-height: 44px; padding: 0 12px; background: var(--black); color: var(--white); border: 3px solid var(--grey); font: inherit; }
+      input:focus, select:focus { outline: 3px solid var(--yellow); outline-offset: 1px; }
+      .row { display: flex; gap: 12px; align-items: end; }
+      .row > * { flex: 1; }
+      .row .narrow { flex: 0 0 160px; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border: 4px solid var(--white); background: var(--blue); color: var(--white); font: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: inset 0 0 0 3px var(--black), 4px 4px 0 0 var(--black); }
+      .btn:active { transform: translate(2px, 2px); box-shadow: inset 0 0 0 3px var(--black), 2px 2px 0 0 var(--black); }
+      .btn:disabled { opacity: .5; cursor: default; }
+      .btn.lamp { background: var(--yellow); color: var(--black); }
+      .btn.ghost { background: var(--navy); border-color: var(--grey); }
+      .status { display: grid; grid-template-columns: 24px 1fr; gap: 6px 10px; align-items: baseline; }
+      .status i { font-style: normal; font-weight: 700; text-align: center; }
+      .ok i { color: var(--green); } .bad i { color: var(--red); }
+      .problems { border: 3px solid var(--red); color: var(--red); padding: 10px 12px; margin: 0 0 18px; }
+      .problems:empty { display: none; }
+      .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      .actions .hint { margin-left: auto; color: var(--grey); font-size: 14px; }
+      .msg { margin: 10px 0 0; min-height: 1.4em; color: var(--ink2); }
+      .msg.bad { color: var(--red); } .msg.ok { color: var(--green); }
+      pre.log { margin: 10px 0 0; max-height: 160px; overflow: auto; padding: 10px; background: var(--black); border: 3px solid var(--grey); color: var(--ink2); font-size: 13px; white-space: pre-wrap; }
+      a { color: var(--yellow); }
+      small { color: var(--grey); }
+    </style>
+  </head>
+  <body>
+    <h1>Pralayam</h1>
+    <p class="sub">Set up the hub on this laptop. Phones join over the hotspot or Wi-Fi; nothing needs the Internet.</p>
+
+    <div class="problems" id="problems"></div>
+
+    <form class="box" id="form" autocomplete="off">
+      <h2>Network</h2>
+      <label for="ip">Hub IP: this laptop's address on the network the phones will use</label>
+      <div class="row">
+        <select id="ipSelect"></select>
+        <input id="ip" class="narrow" placeholder="or type it" inputmode="decimal" />
+      </div>
+      <small>Windows Mobile Hotspot is always 192.168.137.1. On a router, give the laptop a fixed address. If the IP changes, make the certificate again.</small>
+
+      <h2 style="margin-top:16px">Host</h2>
+      <label for="passcode">Host passcode (8+ characters; typed on the big screen, never shown to players)</label>
+      <div class="row">
+        <input id="passcode" type="password" minlength="8" />
+        <button type="button" class="btn ghost narrow" id="showPass">Show</button>
+      </div>
+      <details style="margin-top:10px">
+        <summary>Ports</summary>
+        <div class="row">
+          <div><label for="httpsPort">Hub (HTTPS)</label><input id="httpsPort" inputmode="numeric" /></div>
+          <div><label for="setupPort">Phone setup page (HTTP)</label><input id="setupPort" inputmode="numeric" /></div>
+        </div>
+      </details>
+    </form>
+
+    <div class="box">
+      <h2>Ready?</h2>
+      <div class="status" id="status"></div>
+      <div class="actions" style="margin-top:12px">
+        <button type="button" class="btn" id="certs">Make the certificate</button>
+        <span class="hint" id="certsHint"></span>
+      </div>
+      <p class="msg" id="msg"></p>
+      <pre class="log" id="log" hidden></pre>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn ghost" id="save">Save</button>
+      <button type="button" class="btn lamp" id="start">Start the night</button>
+      <span class="hint" id="where"></span>
+    </div>
+    <script src="./setup.js"></script>
+  </body>
+</html>

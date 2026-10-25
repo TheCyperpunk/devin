@@ -17,8 +17,9 @@ export const config = {
   httpsPort: Number(process.env.HTTPS_PORT ?? PORTS.https),
   setupPort: Number(process.env.SETUP_PORT ?? PORTS.setup),
   coordinatorPasscode: process.env.COORDINATOR_PASSCODE ?? '',
-  certsDir: path.join(repoRoot, 'certs'),
-  webDist: path.join(repoRoot, 'web', 'dist'),
+  // CERTS_DIR and WEB_DIST let a packaged desktop app keep these outside the repo layout.
+  certsDir: process.env.CERTS_DIR ? path.resolve(process.env.CERTS_DIR) : path.join(repoRoot, 'certs'),
+  webDist: process.env.WEB_DIST ? path.resolve(process.env.WEB_DIST) : path.join(repoRoot, 'web', 'dist'),
   dataDir: process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(repoRoot, 'server', 'data'),
 };
 

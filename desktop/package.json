@@ -1,0 +1,13 @@
+{
+  "name": "@pralayam/desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Pralayam desktop app: the hub and the big screen in one window",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "34.0.2"
+  }
+}

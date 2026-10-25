@@ -91,6 +91,9 @@ phone no-signal, phone result; private until shared from its Share menu).
 - **Desktop app (2026-10-25):** `npm run app` and a desktop/Start menu icon start the hub and open the big screen
   in its own app window; closing it stops the hub (DECISIONS D21, docs/DESKTOP.md). `npm run e2e:desktop` covers
   the lifecycle. Phones stay a web app.
+- **Electron app (2026-10-25):** `npm run electron` opens the same screen in a real Electron window with a setup
+  window for first run (IP, passcode, mkcert); the hub stays a Node child (DECISIONS D22). `npm run e2e:electron`
+  covers it. Not yet: a packaged installer.
 - **Stars, bot baseline (2026-10-25):** the fixed Thuruthu night scores 170 with 3 bots (exactly 1★), 238 with 4,
   343 with 5; 200 random nights with 3 bots have median 34. starBase stays 170 so that humans who beat the bots
   earn 2★ at 221 and 3★ at 272. Re-tune only from real games.

@@ -1,10 +1,39 @@
 # Pralayam as a desktop app
 
-The laptop runs Pralayam like an installed program: double-click the icon, the hub starts, the big screen opens in
-its own window, and closing that window stops the hub. Phones need nothing new: they already install the game from the
-hub as a web app (open `https://<HUB_IP>:3443` on the phone, then "Add to Home screen").
+The laptop runs Pralayam like an installed program: open it, the hub starts, the big screen opens in its own window,
+and closing that window stops the hub. Phones need nothing new: they already install the game from the hub as a web
+app (open `https://<HUB_IP>:3443` on the phone, then "Add to Home screen"). There is no native phone app.
 
-## Set it up once (Windows)
+There are two ways to get that window. The **Electron app** (below) is the real application: its own window and
+menu, a setup screen for first run, no browser needed. The **launcher** further down does the same with the Edge
+already on the laptop and is the fallback when Electron is not installed.
+
+## The Electron app
+```
+npm install            # fetches Electron once (about 110 MB, Internet needed for this step only)
+npm run build
+npm run electron       # or: npm run electron -w desktop
+```
+What it does, in order:
+1. Reads its settings: `settings.json` in the app's user-data folder (`%APPDATA%\@pralayam\desktop` on Windows),
+   under `.env` defaults while running from the repo.
+2. If the hub IP, the passcode, the certificate, Node.js or the game build is missing, opens the **setup window**:
+   pick the laptop's IP from a list, set the passcode, press *Make the certificate* (runs mkcert; Windows asks for
+   permission once), then *Start the night*. The setup window is also under the Pralayam menu (press Alt to show it).
+3. Starts the hub as a Node child process (or reuses a hub already running on the port), with the passcode in the
+   child's environment only.
+4. Opens `https://localhost:3443/screen.html` in the app window, trusting the hub's certificate by its fingerprint
+   and nothing else. F11 is full screen, Ctrl+R reloads, the menu has *Phone setup page*.
+5. Closing the window quits the app and stops the hub it started. The game is saved after every change, so opening
+   the app again resumes the night.
+
+Node.js 20+ must be installed on the laptop, as for `npm start`. `npm run e2e:electron` is the real-window test
+of this lifecycle. Packaging into a single installer is the next step and is not done yet: it needs the hub's
+production dependencies staged beside the app and electron-builder, which downloads its tools at build time.
+
+## The launcher (no Electron)
+
+### Set it up once (Windows)
 ```
 npm install
 copy .env.example .env      # HUB_IP and a COORDINATOR_PASSCODE of 8+ characters
@@ -14,7 +43,7 @@ npm run app:shortcut        # puts "Pralayam" on the desktop and in the Start me
 Then double-click **Pralayam**. The first run builds the game (about a minute). To remove it, delete the two
 `Pralayam.lnk` files the command printed and the folder `%LOCALAPPDATA%\Pralayam`.
 
-## What the app does
+### What the launcher does
 1. Checks `.env`, the passcode and the certificate, and says plainly what is wrong.
 2. Warns if `HUB_IP` is not an address of this laptop right now (hotspot or Wi-Fi not up): the screen still works,
    phones cannot reach it.
@@ -27,7 +56,7 @@ Then double-click **Pralayam**. The first run builds the game (about a minute). 
 
 You still log in with the host passcode on the screen. It is never put in a URL or on the command line.
 
-## Commands
+### Commands
 | Command | What it does |
 |---|---|
 | `npm run app` | Same as the icon, from a terminal. `--fullscreen` opens full screen, `--keep-hub` leaves the hub running after the window closes. |
@@ -35,7 +64,6 @@ You still log in with the host passcode on the screen. It is never put in a URL 
 | `npm run app:shortcut` | Creates the desktop and Start menu icon (Windows). |
 | `npm run e2e:desktop` | Real-browser test of the whole lifecycle on throwaway ports. |
 
-## Why not Electron or a packaged .exe
-It would add roughly 100 MB, a second build pipeline, and a rebuild of the SQLite module for Electron's runtime, and
-it would change nothing a player sees. The launcher uses the Edge already on the laptop, adds no dependencies, and keeps
-`npm start` working as before (DECISIONS D21). A single installer can be added later without touching the game.
+### Why the launcher is kept
+It needs nothing beyond Node and the Edge already on the laptop, so it is the fallback when `npm install` could not
+fetch Electron (DECISIONS D21 and D22).

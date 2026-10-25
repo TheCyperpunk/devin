@@ -6,7 +6,8 @@
   "workspaces": [
     "shared",
     "server",
-    "web"
+    "web",
+    "desktop"
   ],
   "scripts": {
     "dev": "concurrently -n web,hub -c cyan,green \"npm run dev -w web\" \"npm run dev -w server\"",
@@ -25,7 +26,9 @@
     "app": "node scripts/desktop.mjs",
     "app:check": "node scripts/desktop.mjs --check",
     "app:shortcut": "node scripts/desktop-shortcut.mjs",
-    "e2e:desktop": "node scripts/e2e-desktop.mjs"
+    "e2e:desktop": "node scripts/e2e-desktop.mjs",
+    "electron": "npm run start -w desktop",
+    "e2e:electron": "node scripts/e2e-electron.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
