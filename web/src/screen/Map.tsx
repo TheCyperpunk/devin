@@ -294,7 +294,7 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
             <rect key={n.id} x={snap(n.x) - 60} y={snap(n.y) - 60} width="120" height="120" fill="none" stroke={P.grey} strokeWidth="2" strokeDasharray="8 8" />
           ))}
           <rect x={z.x - (z.label.length + 12) * 5 - 8} y={z.y - 13} width={(z.label.length + 12) * 10 + 16} height="20" fill={P.black} stroke={P.grey} strokeWidth="2" />
-          <text x={z.x} y={z.y + 1} textAnchor="middle" fill={P.grey} fontFamily="'Press Start 2P', monospace" fontSize="10">
+          <text x={z.x} y={z.y + 1} textAnchor="middle" fill={compact ? P.white : P.grey} fontFamily="'Press Start 2P', monospace" fontSize="10">
             {z.label.toUpperCase()} · NO SIGNAL
           </text>
         </g>
@@ -335,7 +335,6 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
           const y = snap(n.y);
           const mine = myBoat?.nodeId === n.id;
           const isTarget = target === n.id;
-          const showLabel = !compact || mine || isTarget || hasCall || n.kind !== 'house';
           const onRoof = flooded && call?.roofRounds !== null && call?.roofRounds !== undefined && call.remaining > 0;
           return (
             <g key={n.id} data-node={n.id} onClick={onPick ? () => onPick(n.id) : undefined} style={onPick ? { cursor: 'pointer' } : undefined}>
@@ -350,12 +349,10 @@ export function WardMap({ view, dim, pops = [], outSince, me, target = null, pat
                   <Sprite name="child" x={x + 8} y={y - 8} outline />
                 </>
               )}
-              {showLabel && (
-                <text x={x} y={compact ? y + 40 : y + 36} fontSize={compact ? 22 : undefined} fill={mine ? P.yellow : quiet ? P.grey : flooded ? P.foam : P.white} stroke={P.black} strokeWidth="3" paintOrder="stroke">
-                  {n.name.toUpperCase()}
-                  {flooded ? ' ~' : n.safe ? ' ✦' : ''}
-                </text>
-              )}
+              <text x={x} y={compact ? y + 38 : y + 36} fontSize={compact ? 18 : undefined} fill={mine ? P.yellow : quiet && !compact ? P.grey : flooded ? P.foam : P.white} stroke={P.black} strokeWidth="3" paintOrder="stroke">
+                {n.name.toUpperCase()}
+                {flooded ? ' ~' : n.safe ? ' ✦' : ''}
+              </text>
             </g>
           );
         })}

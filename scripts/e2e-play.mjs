@@ -108,11 +108,12 @@ try {
   await phones[0].screenshot({ path: path.join(shots, '3b-phone-sheet.png') });
   await phones[0].click('[data-testid=orders-toggle]');
 
-  // ---- the radio: one tap sends Asha down the whole route to the suggested call; the map names the plan
+  // ---- tap a place two moves away: one Go queues the whole route; the map names the plan
   const ashaId = gameState().boats.find((b) => b.name === 'Asha').id;
-  ok((await text(phones[0])).toLowerCase().includes('radio'), 'phone Asha: the radio suggests a place');
-  ok(await waitSel(phones[0], '[data-testid=radio-go]'), 'phone Asha: Go button on the suggestion');
-  await tap(phones[0], '[data-testid=radio-go]');
+  ok(!(await text(phones[0])).toLowerCase().includes('radio'), 'phone Asha: no suggestion card, the map and the move list are the controls');
+  await phones[0].$eval('.phonemap [data-node=vattappara]', (el) => el.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  ok(await waitSel(phones[0], '[data-testid=pick]'), 'phone Asha: tapping Vattappara shows "Go to Vattappara · 2 moves"');
+  await tap(phones[0], '[data-testid=pick-go]');
   ok(await waitHub(() => received(ashaId) >= 2), 'hub: Go queued the whole route (two moves)');
   ok(await waitSel(phones[0], '[data-testid=route]'), 'phone Asha: "on the way to … · 2 moves left"');
   // tap a place on the map instead: the pick card, then Go, which replaces the plan

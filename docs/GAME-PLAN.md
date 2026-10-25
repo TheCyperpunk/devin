@@ -85,6 +85,9 @@ phone no-signal, phone result; private until shared from its Share menu).
   how the night ended ("Everyone came home." / "Nobody was lost to the water tonight." / "N were still on their
   roofs at first light.") and ask "What would you do differently next time?"; Malayalam reviewed once more
   (`കുടിവെള്ള കിറ്റ്`, four new lines). Rehearsal checklist added to DEMO.md.
+- **Usability pass 2 (2026-10-25, from the second playtest):** the radio suggestion card is gone ("we already have
+  the move option, use that"); the phone's controls are tap-a-place on the map and the move list. Every place name
+  now shows on the phone map, white, at a size that fits between houses.
 - **Stars, bot baseline (2026-10-25):** the fixed Thuruthu night scores 170 with 3 bots (exactly 1★), 238 with 4,
   343 with 5; 200 random nights with 3 bots have median 34. starBase stays 170 so that humans who beat the bots
   earn 2★ at 221 and 3★ at 272. Re-tune only from real games.

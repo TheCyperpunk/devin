@@ -174,8 +174,8 @@ The order screen is the ward map, edge to edge, with the HUD floating over it. N
 │      the same WardMap    │  pan box: 230% wide, 140% tall, follows your boat (framed in
 │      as the big screen   │  your colour, labelled YOU); tap a place = target
 │                          │
-│ RADIO  Go to Vattappara  │  floating bottom HUD: radio suggestion (or the tapped place)
-│        4 waiting   [GO]  │  with one GO; "en route" line while a plan is queued
+│ Go to Vattappara · 2 mv  │  floating bottom HUD: the tapped place with one GO (no suggestion
+│ 4 waiting   [GO] [✕]     │  card: the player chooses); "en route" line while a plan is queued
 │ You are at Jetty · ...   │  where you are, who is with you
 │ [ OR ONE MOVE AT A TIME ]│  opens the pull-up sheet
 └──────────────────────────┘

@@ -84,12 +84,6 @@ p { margin: 0; line-height: 1.5; }
 .phonemap .waveB { animation: waveSwapB 1.2s steps(1) infinite; }
 .phonemap .river.splash { animation: splash .6s steps(2) 2; }
 .phonemap.dim { opacity: .55; }
-.radio { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 14px; background: var(--p-black); border: var(--px) solid var(--p-yellow); box-shadow: 4px 4px 0 0 var(--p-black); }
-.radio .label { grid-column: 1 / -1; color: var(--p-yellow); }
-.radio .txt { font-size: 18px; font-weight: 700; line-height: 1.3; }
-.radio .txt small { display: block; font-weight: 500; color: var(--ink-2); font-size: 14px; }
-.radio .btn { min-height: 56px; min-width: 88px; }
-.radio.quiet { border-color: var(--p-grey); }
 .route { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--p-navy); border: 3px solid var(--p-yellow); font-size: 16px; }
 .route .num { color: var(--p-yellow); font-size: 11px; }
 .pick { display: grid; gap: 10px; padding: 14px; background: var(--p-black); border: var(--px) solid var(--p-white); box-shadow: 4px 4px 0 0 var(--p-black); }

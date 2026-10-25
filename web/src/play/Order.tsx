@@ -1,12 +1,12 @@
-// The crew's screen: where you are, what the radio suggests (one tap: Go), the whole ward to tap a place and go,
-// your route, and the single-move orders for fine control. Routes queue one move per round through the outbox.
+// The crew's screen: where you are, the whole ward to tap a place and go, single moves in a pull-up sheet, the
+// no-signal banner and the round card. Routes queue one move per round through the outbox.
 import { useEffect, useRef, useState } from 'react';
 import { GAME, KITS, type Boat, type GameView, type Order } from '@pralayam/shared';
 import { COLOR_PX } from '../game/sprites.js';
 import type { GameSync, GameSyncState } from '../lib/gameSync.js';
 import { buzz, tick } from './feedback.js';
 import { LangToggle, useLang } from './lang.js';
-import { NODES, estimatedRound, legalOrders, nodeName, routeOrders, suggest, ward, type OrderOption } from './orders.js';
+import { NODES, estimatedRound, legalOrders, nodeName, routeOrders, ward, type OrderOption } from './orders.js';
 import { WardMap } from '../screen/Map.js';
 import { useTick } from './useGame.js';
 
@@ -32,10 +32,9 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const unapplied = state.unsent + state.queued;
   const remaining = view.deadlineAt !== null ? view.deadlineAt - hubNow : 0;
   const round = contact ? view.round : estimatedRound(view, hubNow);
-  const tip = suggest(view, boat);
   const plan = state.plan;
-  const routePath = target ? ward.shortestPath(boat.nodeId, target) ?? [] : plan ? ward.shortestPath(boat.nodeId, plan.target) ?? [] : tip ? tip.path : [];
-  const highlighted = target ?? plan?.target ?? tip?.nodeId ?? null;
+  const routePath = target ? ward.shortestPath(boat.nodeId, target) ?? [] : plan ? ward.shortestPath(boat.nodeId, plan.target) ?? [] : [];
+  const highlighted = target ?? plan?.target ?? null;
   const here = view.boats.filter((b) => b.id !== boat.id && b.nodeId === boat.nodeId).map((b) => b.name);
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -250,24 +249,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
               </button>
             </div>
           </div>
-        ) : (
-          <div className={'radio' + (tip ? '' : ' quiet')} data-testid="radio">
-            <span className="label">{t('radio')}</span>
-            <span className="txt">
-              {tip
-                ? tip.kind === 'call'
-                  ? t('radioCall', { place: nodeName(tip.nodeId, lang), n: tip.people, prio: tip.priority ? t('radioPriority') : '' })
-                  : t('radioReturn', { place: nodeName(tip.nodeId, lang) })
-                : t('radioQuiet')}
-              {tip && <small>{movesWord(tip.path.length)}</small>}
-            </span>
-            {tip && (
-              <button type="button" className="btn lamp" onClick={() => void go(tip.kind === 'call' ? routeOrders(boat.nodeId, tip.nodeId) : [{ type: 'return' }], tip.nodeId, 'plan')} data-testid="radio-go">
-                {t('go')}
-              </button>
-            )}
-          </div>
-        )}
+        ) : null}
         {plan && unapplied > 0 && !target && (
           <div className="route" data-testid="route">
             <span className="num">▶</span>
@@ -278,6 +260,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
           <span className="hint">
             {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
             {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''}
+            {!target && !(plan && unapplied > 0) ? ' · ' + t('tapMap') : ''}
           </span>
           <button type="button" className="btn small" onClick={() => setSheet((s) => !s)} aria-expanded={sheet} data-testid="orders-toggle">
             {t('orByHand')}
