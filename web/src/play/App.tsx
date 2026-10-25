@@ -93,7 +93,12 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
                 {state.needsPairing === 'reset' ? t('pairAgainReset') : t('pairAgainToken')}
               </p>
             ) : (
-              <p className="muted center">{t('tagline')}</p>
+              <>
+                <p className="muted center">{t('tagline')}</p>
+                <p className="howto" data-testid="howto">
+                  <b>{t('howToPlayLabel')}</b> {t('howToPlay')}
+                </p>
+              </>
             )}
             <Pair settings={settings} onPaired={onPaired} />
           </>
@@ -131,6 +136,9 @@ function Shell({ settings, update, reload }: { settings: Settings; update: (p: S
             </div>
             <p>{t('aboard', { name: boat.name })}</p>
             <p className="muted blinkText">{t('waitingHost')}</p>
+            <p className="howto" data-testid="howto">
+              <b>{t('howToPlayLabel')}</b> {t('howToPlay')}
+            </p>
             <ul className="crews">
               {view.boats.map((b) => (
                 <li key={b.id}>

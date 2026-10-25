@@ -97,6 +97,8 @@
 .lobbyTitle { text-align: center; }
 .display.h1 { font-size: 56px; color: var(--p-yellow); text-shadow: 6px 6px 0 var(--p-black); }
 .lobbyTitle .muted { font-size: 22px; margin-top: 14px; }
+.howto { margin: 18px auto 0; max-width: 1180px; display: flex; align-items: center; gap: 18px; padding: 12px 20px; background: var(--p-black); border: var(--px) solid var(--p-yellow); box-shadow: 4px 4px 0 0 var(--p-black); font-size: 21px; line-height: 1.35; text-align: left; }
+.howto .label { color: var(--p-yellow); font-size: 12px; flex: none; }
 .lobby { width: min(1180px, 92vw); display: flex; gap: 40px; padding: 36px 40px; box-sizing: border-box; }
 .qrSide { display: flex; flex-direction: column; align-items: center; gap: 14px; flex: none; }
 .bigqr { width: 344px; height: 344px; background: var(--p-white); border: 8px solid var(--p-white); box-sizing: border-box; }

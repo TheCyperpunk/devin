@@ -59,6 +59,7 @@ try {
   await clickHost(page, 'new');
   ok(await waitText(page, 'Crews at the jetty'), 'lobby: opened');
   ok(await page.$('img.bigqr') !== null, 'lobby: QR code shown');
+  ok(await waitText(page, 'how to play'), 'lobby: one-line "how to play" for late arrivals');
   ok((await text(page)).includes('Scan to crew a boat'), 'lobby: join instructions');
   await page.screenshot({ path: path.join(shots, '2-lobby.png') });
 

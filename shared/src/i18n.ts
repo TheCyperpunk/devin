@@ -108,6 +108,9 @@ const en = {
   orByHand: 'Or one move at a time',
   othersHere: 'Boats here: {names}',
 
+  howToPlayLabel: 'How to play',
+  howToPlay: 'Tap a house on your phone and press GO. A boat carries four. Bring them to the camp before the water takes the roofs. Children and the elderly first.',
+
   // first light
   endAll: 'Everyone came home.',
   endNoneLost: 'Nobody was lost to the water tonight.',
@@ -217,6 +220,8 @@ const ml: Record<StringKey, string> = {
   orByHand: 'അല്ലെങ്കിൽ ഓരോ നീക്കമായി',
   othersHere: 'ഇവിടെയുള്ള ബോട്ടുകൾ: {names}',
 
+  howToPlayLabel: 'എങ്ങനെ കളിക്കാം',
+  howToPlay: 'ഫോണിൽ ഒരു വീട് തൊട്ട് GO അമർത്തുക. ഒരു ബോട്ടിൽ നാലു പേർ. വെള്ളം മേൽക്കൂര മൂടും മുമ്പ് അവരെ ക്യാമ്പിൽ എത്തിക്കുക. കുട്ടികളും പ്രായമായവരും ആദ്യം.',
   endAll: 'എല്ലാവരും സുരക്ഷിതരായി.',
   endNoneLost: 'ഇന്ന് രാത്രി ആരെയും വെള്ളത്തിന് നഷ്ടപ്പെട്ടില്ല.',
   endLost: 'പുലരുമ്പോഴും {n} പേർ മേൽക്കൂരയിൽ തന്നെയായിരുന്നു.',

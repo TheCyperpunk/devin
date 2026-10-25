@@ -19,6 +19,8 @@ p { margin: 0; line-height: 1.5; }
 .btn.big { min-height: 64px; width: 100%; font-size: 15px; }
 .error { margin: 0; padding: 10px 12px; border: 3px solid var(--p-red); color: var(--p-red); font-weight: 700; }
 .notice { padding: 10px 12px; border: 3px solid var(--p-yellow); color: var(--p-yellow); }
+.howto { margin: 0; padding: 10px 12px; border: 3px solid var(--p-yellow); background: var(--p-black); font-size: 16px; line-height: 1.4; }
+.howto b { display: block; font-family: var(--font-display); font-size: 10px; color: var(--p-yellow); margin-bottom: 4px; text-transform: uppercase; }
 .bad { color: var(--p-red); }
 .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .swatch { height: 64px; border: var(--px) solid var(--p-white); box-shadow: inset 0 0 0 var(--px) var(--p-black), 4px 4px 0 0 var(--p-black); }

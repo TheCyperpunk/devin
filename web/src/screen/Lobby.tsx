@@ -1,4 +1,5 @@
-// Lobby overlay: the QR to join, crews docking as phones join, round length and bots, Start. Also the "no game yet" card.
+// Lobby overlay: one line on how to play for whoever just walked in, the QR to join, crews docking as phones join,
+// round length and bots, Start. Also the "no game yet" card.
 import { useState } from 'react';
 import { thuruthu, type GameView } from '@pralayam/shared';
 import type { JoinInfo } from '@pralayam/shared';
@@ -15,6 +16,10 @@ export function Lobby({ view, join, store, busy }: { view: GameView | null; join
       <div className="lobbyTitle rise">
         <div className="display h1">Pralayam</div>
         <div className="muted">{thuruthu.name} · the night of 16 August · a co-op rescue for everyone in the room</div>
+        <div className="howto" data-testid="howto">
+          <span className="label">How to play</span>
+          <span>Tap a house on your phone and press GO. A boat carries four. Bring them to the camp before the water takes the roofs. Children and the elderly first.</span>
+        </div>
       </div>
       <div className="panel lobby rise">
         <div className="qrSide">
