@@ -1,4 +1,4 @@
-// The crew's screen: where you are, the whole ward to tap a place and go, single moves in a pull-up sheet, the
+// The crew's screen: HUD strips, the whole ward to tap a place and go, the move list always open below, the
 // no-signal banner and the round card. Routes queue one move per round through the outbox.
 import { useEffect, useRef, useState } from 'react';
 import { GAME, KITS, type Boat, type GameView, type Order } from '@pralayam/shared';
@@ -25,7 +25,6 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const [target, setTarget] = useState<string | null>(null);
   const [sentAt, setSentAt] = useState<number | null>(null);
   const [warn, setWarn] = useState<{ steps: Order[]; target: string | null; mode: 'plan' | 'append' } | null>(null);
-  const [sheet, setSheet] = useState(false);
   const options = legalOrders(view, boat);
   const inZone = !(NODES[boat.nodeId]?.signal ?? true);
   const contact = state.hub === 'online' && !state.noSignal && !inZone && (state.viewAt === null || now - state.viewAt < 25_000);
@@ -38,25 +37,37 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
   const here = view.boats.filter((b) => b.id !== boat.id && b.nodeId === boat.nodeId).map((b) => b.name);
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // The map is drawn wider than the phone so sprites stay readable; keep the boat's place in the middle of the window.
+  // The map is drawn wider than the phone so sprites stay readable. It stays where the player left it: it centres on
+  // the boat once when it gets its size, and later only if the boat moves out of the window.
+  const framed = useRef(false);
   useEffect(() => {
     const box = mapRef.current;
     const svg = box?.querySelector<SVGSVGElement>('svg.map');
     if (!box || !svg) return;
-    const centre = () => {
+    const centre = (onlyIfOffscreen: boolean) => {
       const el = box.querySelector<SVGGElement>(`[data-node="${boat.nodeId}"]`);
       if (!el) return;
       const b = box.getBoundingClientRect();
       const r = el.getBoundingClientRect();
+      const visible = r.left >= b.left && r.right <= b.right && r.top >= b.top && r.bottom <= b.bottom;
+      if (onlyIfOffscreen && visible) return;
       box.scrollTo({
         left: Math.max(0, box.scrollLeft + (r.left + r.width / 2 - b.left) - box.clientWidth / 2),
         top: Math.max(0, box.scrollTop + (r.top + r.height / 2 - b.top) - box.clientHeight / 2),
-        behavior: 'smooth',
+        behavior: framed.current ? 'smooth' : 'auto',
       });
     };
-    centre();
-    // the map picks its pixel-perfect size after mount and on rotation: follow it
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(centre) : null;
+    centre(framed.current);
+    const ro =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            // the map picks its pixel-perfect size after mount and on rotation: frame the boat then, once
+            if (svg.clientWidth > 0 && !framed.current) {
+              centre(false);
+              framed.current = true;
+            }
+          })
+        : null;
     ro?.observe(svg);
     return () => ro?.disconnect();
   }, [boat.nodeId]);
@@ -101,7 +112,6 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
     buzz(20);
     setPicked(null);
     setTarget(null);
-    setSheet(false);
   }
   async function goWithReturn(w: NonNullable<typeof warn>) {
     if (boat.standingOrder !== 'return') await sync.submit({ type: 'standing', mode: 'return' }, 'append');
@@ -145,22 +155,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
 
   return (
     <div className="full" data-screen="order">
-      <div className={'phonemap mapfull' + (!contact ? ' dim' : '')} ref={mapRef}>
-        <WardMap
-          view={view}
-          me={boat.id}
-          target={highlighted}
-          path={routePath}
-          onPick={(id) => {
-            setTarget(id === boat.nodeId ? null : id);
-            setSheet(false);
-          }}
-          compact
-          fit="phone"
-        />
-      </div>
-
-      <div className="hud hud-top">
+      <div className="hud-top">
         <div className="strip">
           <span className="hull" style={{ background: COLOR_PX[boat.color] }} />
           <span className="who">{boat.name}</span>
@@ -190,28 +185,66 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
             ))}
           </span>
         </div>
-        {!contact && (
-          <div className="banner" role="status" data-testid="no-signal">
-            <span className="radio-x">✕</span>
-            <span>
-              {state.hub === 'offline' ? t('hubOffline') : t('noSignal')}
-              {unapplied ? ` · ${t('ordersQueued', { n: unapplied })}` : ''}
-              <br />
-              <small>
-                {t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })} · ~{t('roundN', { n: round })}
-              </small>
+      </div>
+
+      <div className="mapbox">
+        <div className={'phonemap mapfull' + (!contact ? ' dim' : '')} ref={mapRef}>
+          <WardMap view={view} me={boat.id} target={highlighted} path={routePath} onPick={(id) => setTarget(id === boat.nodeId ? null : id)} compact fit="phone" />
+        </div>
+        <div className="hud hud-over">
+          {!contact && (
+            <div className="banner" role="status" data-testid="no-signal">
+              <span className="radio-x">✕</span>
+              <span>
+                {state.hub === 'offline' ? t('hubOffline') : t('noSignal')}
+                {unapplied ? ` · ${t('ordersQueued', { n: unapplied })}` : ''}
+                <br />
+                <small>
+                  {t('lastUpdate', { s: Math.max(0, Math.round((now - (state.viewAt ?? now)) / 1000)) })} · ~{t('roundN', { n: round })}
+                </small>
+              </span>
+              <button type="button" className="btn small" onClick={() => void sync.retryNow()} data-testid="retry">
+                {t('retryNow')}
+              </button>
+            </div>
+          )}
+          {state.notice && (
+            <p className="notice" role="alert">
+              {state.notice === 'late' ? t('orderLate') : state.notice === 'invalid' ? t('orderInvalid') : state.notice === 'ended' ? t('nightOver') : t('errGeneric')}
+            </p>
+          )}
+          {state.lastRound && state.lastRoundAt !== null && now - state.lastRoundAt < 6000 && <RoundCard payload={state.lastRound} boatId={boat.id} lang={lang} />}
+        </div>
+        <div className="hud hud-bottom">
+          {target ? (
+            <div className="pick" data-testid="pick">
+              <span className="txt">
+                <b>{t('goTo', { place: nodeName(target, lang) })}</b> · {movesWord(ward.distance(boat.nodeId, target))}
+                {targetCall ? ' · ' + t('peopleWaiting', { n: targetCall.remaining }) : ''}
+                {!(NODES[target]?.signal ?? true) ? ' · ' + t('noSignalThere') : ''}
+              </span>
+              <div className="btns">
+                <button type="button" className="btn lamp" onClick={() => void go(routeOrders(boat.nodeId, target), target, 'plan')} data-testid="pick-go">
+                  {t('go')}
+                </button>
+                <button type="button" className="btn ghost" onClick={() => setTarget(null)}>
+                  {t('cancel')}
+                </button>
+              </div>
+            </div>
+          ) : plan && unapplied > 0 ? (
+            <div className="route" data-testid="route">
+              <span className="num">▶</span>
+              <span>{t('enRoute', { place: nodeName(plan.target, lang), n: unapplied })}</span>
+            </div>
+          ) : (
+            <span className="hint where">
+              {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
+              {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''}
+              {' · ' + t('tapMap')}
             </span>
-            <button type="button" className="btn small" onClick={() => void sync.retryNow()} data-testid="retry">
-              {t('retryNow')}
-            </button>
-          </div>
-        )}
-        {state.notice && (
-          <p className="notice" role="alert">
-            {state.notice === 'late' ? t('orderLate') : state.notice === 'invalid' ? t('orderInvalid') : state.notice === 'ended' ? t('nightOver') : t('errGeneric')}
-          </p>
-        )}
-        {state.lastRound && state.lastRoundAt !== null && now - state.lastRoundAt < 6000 && <RoundCard payload={state.lastRound} boatId={boat.id} lang={lang} />}
+          )}
+        </div>
       </div>
 
       {warn !== null && (
@@ -232,49 +265,7 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
         </div>
       )}
 
-      <div className="hud hud-bottom">
-        {target ? (
-          <div className="pick" data-testid="pick">
-            <span className="txt">
-              <b>{t('goTo', { place: nodeName(target, lang) })}</b> · {movesWord(ward.distance(boat.nodeId, target))}
-              {targetCall ? ' · ' + t('peopleWaiting', { n: targetCall.remaining }) : ''}
-              {!(NODES[target]?.signal ?? true) ? ' · ' + t('noSignalThere') : ''}
-            </span>
-            <div className="btns">
-              <button type="button" className="btn lamp" onClick={() => void go(routeOrders(boat.nodeId, target), target, 'plan')} data-testid="pick-go">
-                {t('go')}
-              </button>
-              <button type="button" className="btn ghost" onClick={() => setTarget(null)}>
-                {t('cancel')}
-              </button>
-            </div>
-          </div>
-        ) : null}
-        {plan && unapplied > 0 && !target && (
-          <div className="route" data-testid="route">
-            <span className="num">▶</span>
-            <span>{t('enRoute', { place: nodeName(plan.target, lang), n: unapplied })}</span>
-          </div>
-        )}
-        <div className="hudbar">
-          <span className="hint">
-            {t('youAreAt', { place: nodeName(boat.nodeId, lang) })}
-            {here.length ? ' · ' + t('othersHere', { names: here.join(', ') }) : ''}
-            {!target && !(plan && unapplied > 0) ? ' · ' + t('tapMap') : ''}
-          </span>
-          <button type="button" className="btn small" onClick={() => setSheet((s) => !s)} aria-expanded={sheet} data-testid="orders-toggle">
-            {t('orByHand')}
-          </button>
-        </div>
-      </div>
-
-      <div className={'sheet' + (sheet ? ' open' : '')} data-testid="sheet" aria-hidden={!sheet}>
-        <div className="sheethead">
-          <span className="sect">{t('yourOrder')}</span>
-          <button type="button" className="btn small ghost" onClick={() => setSheet(false)} aria-label={t('cancel')}>
-            ✕
-          </button>
-        </div>
+      <div className="orders" data-testid="orders">
         <div className="rows" role="listbox" aria-label={t('yourOrder')}>
           {options.map((o, i) => (
             <button key={i} type="button" role="option" aria-selected={picked === i} className={'row' + (picked === i ? ' sel' : '') + (o.band ? ' band-' + o.band : '')} data-kind={o.kind} data-node={o.nodeId} onClick={() => setPicked(i)}>
@@ -287,14 +278,16 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
             </button>
           ))}
         </div>
-        <button type="button" className={'btn lamp big' + (sentAt ? ' sent' : '')} disabled={picked === null} onClick={() => sendPicked('plan')} data-testid="send">
-          {sentAt ? '✓ ' + (contact ? t('orderSent') : t('orderQueuedOne')) : unapplied > 0 && contact ? t('changeOrder') : contact ? t('sendOrder') : t('queueOrder')}
-        </button>
-        {unapplied > 0 && picked !== null && (
-          <button type="button" className="btn big" onClick={() => sendPicked('append')} data-testid="queue-next">
-            {t('queueNext')}
+        <div className="sendrow">
+          <button type="button" className={'btn lamp big' + (sentAt ? ' sent' : '')} disabled={picked === null} onClick={() => sendPicked('plan')} data-testid="send">
+            {sentAt ? '✓ ' + (contact ? t('orderSent') : t('orderQueuedOne')) : unapplied > 0 && contact ? t('changeOrder') : contact ? t('sendOrder') : t('queueOrder')}
           </button>
-        )}
+          {unapplied > 0 && picked !== null && (
+            <button type="button" className="btn big" onClick={() => sendPicked('append')} data-testid="queue-next">
+              {t('queueNext')}
+            </button>
+          )}
+        </div>
         <div className="standing">
           <span>{t('ifNoSignal')}</span>
           <span className="seg" role="group" aria-label={t('ifNoSignal')}>
@@ -305,8 +298,6 @@ export function OrderScreen({ view, boat, state, sync }: { view: GameView; boat:
               {t('returnHome')}
             </button>
           </span>
-        </div>
-        <div className="sheetfoot">
           <LangToggle />
         </div>
       </div>

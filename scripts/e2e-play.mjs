@@ -102,11 +102,7 @@ try {
   const timer = await phones[0].$eval('[data-testid=timer]', (el) => el.innerText);
   ok(/^0:[0-3]\d$/.test(timer), `phone: countdown running (${timer})`);
   await phones[0].screenshot({ path: path.join(shots, '3-phone-order.png') });
-  await phones[0].click('[data-testid=orders-toggle]');
-  ok(await waitSel(phones[0], '.sheet.open [data-testid=send]'), 'phone: the by-hand sheet slides up');
-  await new Promise((r) => setTimeout(r, 400));
-  await phones[0].screenshot({ path: path.join(shots, '3b-phone-sheet.png') });
-  await phones[0].click('[data-testid=orders-toggle]');
+  ok(await phones[0].$eval('[data-testid=send]', (el) => el.getBoundingClientRect().bottom <= window.innerHeight), 'phone: the move list and Send are on screen without opening anything');
 
   // ---- tap a place two moves away: one Go queues the whole route; the map names the plan
   const ashaId = gameState().boats.find((b) => b.name === 'Asha').id;

@@ -165,22 +165,21 @@ Numbers use `font-variant-numeric: tabular-nums` so timers do not jitter.
   2018 lines, crews ranked by people delivered, "Play again" / "Show the real tool" (opens the dashboard).
 
 ## 6. Phone layout (390 × 844, works at 320) — full-screen edition
-The order screen is the ward map, edge to edge, with the HUD floating over it. No app header while playing.
+Three bands, top to bottom, nothing hidden behind a button. No app header while playing.
 ```
 ┌──────────────────────────┐
-│ ▮ Asha      Round 4  0:32│  floating top HUD: crew chip, round, timer (lamp)
-│ ▢▢▢▢ 3/4 aboard  💧🍚🩺  │  status strip; no-signal banner / round card stack under it
-│                          │
-│      the same WardMap    │  pan box: 230% wide, 140% tall, follows your boat (framed in
-│      as the big screen   │  your colour, labelled YOU); tap a place = target
-│                          │
-│ Go to Vattappara · 2 mv  │  floating bottom HUD: the tapped place with one GO (no suggestion
-│ 4 waiting   [GO] [✕]     │  card: the player chooses); "en route" line while a plan is queued
-│ You are at Jetty · ...   │  where you are, who is with you
-│ [ OR ONE MOVE AT A TIME ]│  opens the pull-up sheet
+│ ▮ Asha      Round 4  0:32│  HUD strips: crew chip, round, timer (lamp); seats, queued, kits
+│ ▢▢▢▢ 3/4 aboard  💧🍚🩺  │
+│      the same WardMap    │  pan box (one unit per CSS pixel): the map stays where you left it;
+│      as the big screen   │  it frames your boat once, then only if the boat leaves the window.
+│ Go to Vattappara · 2 mv  │  floating over the map's foot: the tapped place with one GO, or the
+│ 4 waiting   [GO] [✕]     │  "en route" line, or "You are at … · tap a place". No-signal banner
+│                          │  and the round card float over the map's head.
+├──────────────────────────┤
+│ ➜ Move · Kavala          │  the move list, always open (max 54% of the screen, scrolls inside):
+│ ➜ Move · Kumbalam        │  single-move rows, SEND ORDER / QUEUE NEXT, "if I lose signal"
+│ [     SEND ORDER      ]  │  hold/return, language toggle
 └──────────────────────────┘
-sheet (slides up over the map, 78% max): single-move rows, SEND ORDER / QUEUE NEXT,
-"if I lose signal" hold/return, language toggle, ✕ to close.
 ```
 - Confirm: button fills left-to-right 300 ms, haptic `navigator.vibrate(20)`, row shows "sent ✓" and stays
   editable until the deadline ("change").
